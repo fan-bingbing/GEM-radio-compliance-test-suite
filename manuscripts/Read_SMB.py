@@ -37,3 +37,4 @@ for i in range(0, 5):# try reading frequecny/level from SMB100A 5 times with 1s 
 
 SIGEN_file.save("SIGEN_Read.xlsx") # save excel file
 # just for first commit
+# just for second commit
