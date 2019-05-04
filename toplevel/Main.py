@@ -63,7 +63,6 @@ def ANZ4365():
         else:
             print("please enter number within the range from 0 to 8.")
 
-
 def ANZ4295():
     print("1. Tx-Frequency error")
     print("2. Tx-Carrier power")
@@ -96,7 +95,6 @@ def ANZ4295():
             start()
         else:
             print("please enter number within the range from 0 to 8.")
-
 
 def start():
     print("1. Hello World!")
