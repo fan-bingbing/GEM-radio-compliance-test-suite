@@ -43,6 +43,7 @@ def Rx_Spurious_response_immunity():
     print("blank")
     exit(0)
 
+
 def Rx_Blocking_immunity():
     print("blank")
     exit(0)
