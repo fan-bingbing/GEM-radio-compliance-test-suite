@@ -1,4 +1,4 @@
-# commercial-radio-test-suite
+# GME radio-compliance-test-suite
 scripts, setup file, data, report file, plots
 
 - Owner: Aaron Fan
