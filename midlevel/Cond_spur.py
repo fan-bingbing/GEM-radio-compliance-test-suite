@@ -20,6 +20,7 @@ def Tx_Conducted_spurious_emissions_setup(setup_sheet):
     Limit_line = sheet["B15"].value # ASNZS4365:2011
     Sweep_points= sheet["B16"].value # get sweep points
 
+
     FSV.write(f"*RST")
     FSV.write("SYST:DISP:UPD ON")
     FSV.write(f"FREQ:STAR {start_frequency}MHz")
