@@ -1,3 +1,5 @@
+import Cond_spur as Con
+import FSV_screenshot as Scr
 
 def Tx_Frequency_error():
     print("blank")
@@ -24,7 +26,9 @@ def Tx_Out_of_band_modulation_response():
     exit(0)
 
 def Tx_Conducted_spurious_emissions():
-    print("blank")
+    Con.Tx_Conducted_spurious_emissions_setup("Cond_Spurious_1")
+    Con.Tx_Conducted_spurious_emissions_test()
+    Sre.Screenshot("9k-150kHz.bmp")
     exit(0)
 
 def Rx_Spurious_emissions():

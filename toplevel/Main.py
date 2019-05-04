@@ -1,6 +1,6 @@
 import Modules
 from sys import exit
-
+import visa
 header = """
 GME Radio compliance test suite Version 1.0
 """
@@ -9,7 +9,26 @@ print("--------------------------------------------")
 print(header)
 print("--------------------------------------------")
 
+rm = visa.ResourceManager()
+SML = rm.open_resource('ASRL4::INSTR') # Unwanted Signal
+SMB = rm.open_resource('USB0::0x0AAD::0x0054::106409::INSTR') # Wanted Signal
+FSV = rm.open_resource('TCPIP0::192.168.10.9::hislip0::INSTR') # Spec An
+CMS = rm.open_resource('GPIB0::24::INSTR') # Audio Analyzer
+SML.clear()  # Clear instrument io buffers and status
+SMB.clear()
+FSV.clear()
+CMS.clear()
 
+def Hellowworld():
+    idn_response1 = SML.query('*IDN?')  # Query the Identification string
+    idn_response2 = SMB.query('*IDN?')
+    idn_response3 = FSV.query('*IDN?')
+    idn_response4 = CMS.query('*IDN?')
+    print (f"Hello, I am {idn_response1}")
+    print (f"Hello, I am {idn_response2}")
+    print (f"Hello, I am {idn_response3}")
+    print (f"Hello, I am {idn_response4}")
+    start()
 
 def ANZ4365():
     print("1. Tx-Frequency error")
@@ -80,16 +99,19 @@ def ANZ4295():
 
 
 def start():
-    print("1. ASNZS4365 for CB Radio")
-    print("2. ASNZS4295 for Comercial Radio")
-    print("3. Quit")
+    print("1. Hello World!")
+    print("2. ASNZS4365 for CB Radio")
+    print("3. ASNZS4295 for Commercial Radio")
+    print("4. Quit")
     while True:
         choice = input("> ")
         if choice == "1":
-            ANZ4365()
+            Helloworld()
         elif choice == "2":
-            ANZ4295()
+            ANZ4365()
         elif choice == "3":
+            ANZ4295()
+        elif choice == "4":
             exit(0)
         else:
             print("please enter number 1, 2, or 3.")

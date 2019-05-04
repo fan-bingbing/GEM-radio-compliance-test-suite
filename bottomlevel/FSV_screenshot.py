@@ -1,10 +1,6 @@
 import os
-import visa
 
-rm = visa.ResourceManager()
-FSV = rm.open_resource("TCPIP0::192.168.10.9::hislip0::INSTR")
-
-file_name = input("input the filename (***.bmp) > ")
+def Screenshot(filename)
 print("Taking instrument screenshot and saving it to the PC... ")
 FSV.write("SYST:DISP:UPD ON")
 FSV.write("DISP:TRACE1:MODE VIEW")# make sure plots are stable
