@@ -2,7 +2,7 @@ from openpyxl import load_workbook
 
 def Tx_Conducted_spurious_emissions_setup(setup_sheet):
     FSV_file_write = load_workbook(filename = "FSV_Setup.xlsx") # create a workbook from existing .xlsx file
-    sheet = FSV_file_write[setup_] # load setup sheet in .xlsx to sheet
+    sheet = FSV_file_write[setup_sheet] # load setup sheet in .xlsx to sheet
     start_frequency = sheet["B1"].value # get start frequency value from sheet
     stop_frequency = sheet["B2"].value # get stop frequency value from sheet
     RBW = sheet["B3"].value # get RBW value from sheet
