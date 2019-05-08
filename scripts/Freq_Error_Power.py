@@ -7,14 +7,14 @@ FSV = rm.open_resource('TCPIP0::192.168.10.9::hislip0::INSTR') # Spec An
 
 FSV_file_write = load_workbook(filename = "Test_Setup.xlsx") # create a workbook from existing .xlsx file
 sheet = FSV_file_write["Freq_Error_Power"] # load setup sheet in .xlsx to sheet
-Centre_frequency = sheet["B1"].value # get start frequency value from sheet
-Span_frequency = sheet["B2"].value # get stop frequency value from sheet
-RBW = sheet["B3"].value # get RBW value from sheet
-VBW = sheet["B4"].value # get VBW value from sheet
-RF_level = sheet["B5"].value # get RF_level
-Attenuation = sheet["B6"].value # get attenuation
-RefLev_offset = sheet["B7"].value# get RFlevel offset
-Trace_peak = sheet["B8"].value # get trace to Pos peak
+Centre_frequency = sheet["B1"].value #
+Span_frequency = sheet["B2"].value #
+RBW = sheet["B3"].value #
+VBW = sheet["B4"].value #
+RF_level = sheet["B5"].value #
+Attenuation = sheet["B6"].value #
+RefLev_offset = sheet["B7"].value#
+Trace_peak = sheet["B8"].value #
 Transducer1 = sheet["B9"].value # cable
 Trans1_ON = sheet["B10"].value
 Transducer2 = sheet["B11"].value # 30dB attenuator
@@ -23,8 +23,8 @@ Transducer3 = sheet["B13"].value # High pass filter
 Trans3_ON = sheet["B14"].value
 Limit_line_1 = sheet["B15"].value # ASNZS4365:2011
 Limit_line_1_ON = sheet["B16"].value # ASNZS4365:2011
-Limit_line_2 = sheet["B17"].value # ASNZS4365:2011
-Limit_line_2_ON = sheet["B18"].value # ASNZS4365:2011
+Limit_line_2 = sheet["B17"].value # ASNZS4295:2015
+Limit_line_2_ON = sheet["B18"].value # ASNZS4295:2015
 Sweep_points= sheet["B19"].value # get sweep points
 
 
