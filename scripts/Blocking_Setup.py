@@ -16,7 +16,7 @@ SMB.clear()
 #FSV.clear()
 CMS.clear()
 
-File_write = load_workbook(filename = "FSV_Setup.xlsx") # create a workbook from existing .xlsx file
+File_write = load_workbook(filename = "Test_Setup.xlsx") # create a workbook from existing .xlsx file
 sheet = File_write["Blocking"] # load setup sheet in .xlsx to sheet
 
 Frequency_RF = sheet["C1"].value #
