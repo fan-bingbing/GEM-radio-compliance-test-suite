@@ -64,18 +64,24 @@ SINAD_file = Workbook()#
 ws_SINAD = SINAD_file.active
 ws_SINAD.title = "SINAD"
 
-for i in range(0,8):
+SINAD_data_str = CMS.query("SINAD:R?")
+SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
+print(SINAD_data_num)
+
+while float(SINAD_data_num) > 14.0:
+    i=0
+    ws_SINAD.cell(row = i+1, column = 1, value = SINAD_data_num)
+    Level_RF = Level_RF + 1
+    SMB.write(f":POW {Level_RF}")
+    SMB.query('*OPC?')
     SINAD_data_str = CMS.query("SINAD:R?")
     SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
     print(SINAD_data_num)
-    if float(SINAD_data_num) > 14.0:
-        ws_SINAD.cell(row = i+1, column = 1, value = SINAD_data_num)
-        Level_RF = Level_RF + 1
-        SMB.write(f":POW {Level_RF}")
-        SMB.query('*OPC?')
-    else:
-        ACS = float(SMB.query(f":POW? "))+3.5-(15.5-3.5)
-        print(f"ACS result:{ACS}")
+
+ACS = float(SMB.query(f":POW? "))+3.5-(15.5-3.5)
+print(f"Adjacent Channel Selectivity result:{ACS}")
+
+
 
 SINAD_file.save("SINAD.xlsx")
 
