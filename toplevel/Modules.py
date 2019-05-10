@@ -23,7 +23,8 @@ def Tx_Max_deviation():
     exit(0)
 
 def Tx_Adjacent_channel_power():
-    print(ACP.Tx_Adjacent_channel_power())
+    Test_frequency = input("Input test frequency in Mhz or press CTRL+C to quit > ")
+    print(ACP.Tx_Adjacent_channel_power(Test_frequency))
     file_name = input("To save the screenshot, input the filename (***.bmp) or press CTRL+C to quit > ")
     Scr.Screenshot(file_name)
     exit(0)
