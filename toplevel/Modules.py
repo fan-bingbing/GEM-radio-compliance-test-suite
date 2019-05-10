@@ -1,5 +1,14 @@
-import Cond_spur as Con
+import sys
+# below codes are for importing files from different directory
+# a __init__.py file has to be exist in both "import from" and "import to" folder
+sys.path.insert(0, r'C:\Users\afan\documents\commercial-radio-test-suite\midlevel')
+sys.path.insert(0, r'C:\Users\afan\documents\commercial-radio-test-suite\bottomlevel')
+# above codes are for importing files from different directory
+# a __init__.py file has to be exist in both "import from" and "import to" folder
+
+import ACP
 import FSV_screenshot as Scr
+
 
 def Tx_Frequency_error():
     print("blank")
@@ -14,7 +23,9 @@ def Tx_Max_deviation():
     exit(0)
 
 def Tx_Adjacent_channel_power():
-    print("blank")
+    print(ACP.Tx_Adjacent_channel_power())
+    file_name = input("To save the screenshot, input the filename (***.bmp) or press CTRL+C to quit > ")
+    Scr.Screenshot(file_name)
     exit(0)
 
 def Tx_Transient_performance():
@@ -26,9 +37,7 @@ def Tx_Out_of_band_modulation_response():
     exit(0)
 
 def Tx_Conducted_spurious_emissions():
-    Con.Tx_Conducted_spurious_emissions_setup("Cond_Spurious_1")
-    Con.Tx_Conducted_spurious_emissions_test()
-    Sre.Screenshot("9k-150kHz.bmp")
+    print("blank")
     exit(0)
 
 def Rx_Spurious_emissions():
