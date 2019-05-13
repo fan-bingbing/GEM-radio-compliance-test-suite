@@ -1,6 +1,12 @@
 import os
+import visa
+
+
 
 def Screenshot(file_name):
+    rm = visa.ResourceManager()
+    FSV = rm.open_resource('TCPIP0::192.168.10.9::hislip0::INSTR') # Spec An
+
     print("Taking instrument screenshot and saving it to the PC... ")
     FSV.write("SYST:DISP:UPD ON")
     FSV.write("DISP:TRACE1:MODE VIEW")# make sure plots are stable
@@ -18,3 +24,4 @@ def Screenshot(file_name):
     new_file.write(file_data)
     new_file.close()
     print(f"saved to PC c:\\Temp\\{file_name}\n") # extract file_name string using (f"{}")
+    FSV.close()
