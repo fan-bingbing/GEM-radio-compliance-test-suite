@@ -6,16 +6,22 @@ sys.path.insert(0, r'C:\Users\afan\documents\commercial-radio-test-suite\bottoml
 # above codes are for importing files from different directory
 # a __init__.py file has to be exist in both "import from" and "import to" folder
 
-import ACP
 import FSV_screenshot as Scr
+import RadioControl as Rcon
+import FreqError_Power as FEP
+import ACP
 
 
-def Tx_Frequency_error():
-    print("blank")
-    exit(0)
-
-def Tx_Carrier_power():
-    print("blank")
+def Tx_Frequency_error_Carrier_power():
+    Test_frequency = input("Input test frequency in Mhz or press CTRL+C to quit > ")
+    Rcon.RadioControl('com8', 'ON')
+    dict = FEP.FreqError_Power(Test_frequency)
+    print(f"Frequency error and Carrier power test {dict['Indication']}")
+    print(f"Frequency error:{dict['Frequency_error']}Hz")
+    print(f"Carrier power:{dict['Carrier_power']}dBm")
+    Rcon.RadioControl('com8', 'OFF')
+    file_name = input("To save the screenshot, input the filename (***.bmp) or press CTRL+C to quit > ")
+    Scr.Screenshot(file_name)
     exit(0)
 
 def Tx_Max_deviation():
