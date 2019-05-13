@@ -4,11 +4,13 @@ from openpyxl import load_workbook
 import time
 import re
 
-rm = visa.ResourceManager()
-FSV = rm.open_resource('TCPIP0::192.168.10.9::hislip0::INSTR') # Spec An
+
 
 
 def Tx_Adjacent_channel_power(Test_frequency):
+    
+    rm = visa.ResourceManager()
+    FSV = rm.open_resource('TCPIP0::192.168.10.9::hislip0::INSTR') # Spec An
 
 # below codes are for setting test frequency in Test_Setup.xlsx according to user's input
     FSV_file_write = load_workbook(filename = "Test_Setup.xlsx") # load an existing .xlsx file
