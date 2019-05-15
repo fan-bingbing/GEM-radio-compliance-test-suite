@@ -9,23 +9,29 @@ sys.path.insert(0, r'C:\Users\afan\documents\commercial-radio-test-suite\bottoml
 import FSV_screenshot as Scr
 import RadioControl as Rcon
 import FreqError_Power as FEP
+import Max_Deviation as MAD
 import ACP
 
 
 def Tx_Frequency_error_Carrier_power():
     Test_frequency = input("Input test frequency in Mhz or press CTRL+C to quit > ")
-    Rcon.RadioControl('com8', 'ON')
+    Rcon.RadioControl('com7', 'ON')
     dict = FEP.FreqError_Power(Test_frequency)
     print(f"Frequency error and Carrier power test {dict['Indication']}")
     print(f"Frequency error:{dict['Frequency_error']}Hz")
     print(f"Carrier power:{dict['Carrier_power']}dBm")
-    Rcon.RadioControl('com8', 'OFF')
+    Rcon.RadioControl('com7', 'OFF')
     file_name = input("To save the screenshot, input the filename (***.bmp) or press CTRL+C to quit > ")
     Scr.Screenshot(file_name)
     exit(0)
 
 def Tx_Max_deviation():
-    print("blank")
+    Test_frequency = input("Input test frequency in Mhz or press CTRL+C to quit > ")
+    Rcon.RadioControl('com7', 'ON')
+    list = MAD.Max_Deviation(Test_frequency)
+    print(f"Max deviation test {list[13]}")
+    print(f"Result stored in:{list}")
+    Rcon.RadioControl('com7', 'OFF')
     exit(0)
 
 def Tx_Adjacent_channel_power():
