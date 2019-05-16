@@ -3,6 +3,9 @@ from openpyxl import load_workbook
 import time
 import re
 
+# naming rules for excel:
+# 1. for operating variables related to Test_Setup.xlsx: use SFile_write, SSheet
+# 2. for operating variables related to Test_Result.xlsx: use RFile_write, RSheet
 
 def Adjacent_channel_selectivity(Test_frequency):
 
@@ -14,8 +17,8 @@ def Adjacent_channel_selectivity(Test_frequency):
 
     # below codes are for setting test frequency in Test_Setup.xlsx according to user's input
     SFile_write = load_workbook(filename = "Test_Setup.xlsx") # create a workbook from existing .xlsx file
-    sheet = SFile_write["ACS"] # load setup sheet in .xlsx to sheet
-    sheet.cell(row = 1, column = 3, value = Test_frequency) # write test frequency in this sheet
+    SSheet = SFile_write["ACS"] # load setup sheet in .xlsx to sheet
+    SSheet.cell(row = 1, column = 3, value = Test_frequency) # write test frequency in this sheet
     SFile_write.save("Test_Setup.xlsx") # save existing .xlsx file
     # above codes are for setting test frequency in Test_Setup.xlsx according to user's input
 
@@ -23,15 +26,15 @@ def Adjacent_channel_selectivity(Test_frequency):
     SMB.clear()
     CMS.clear()
     # below codes are for setting standard test condition SML(FM) = 15.5dBuV
-    File_write = load_workbook(filename = "Test_Setup.xlsx") # create a workbook from existing .xlsx file
-    sheet = File_write["ACS"] # load setup sheet in .xlsx to sheet
+    SFile_write = load_workbook(filename = "Test_Setup.xlsx") # create a workbook from existing .xlsx file
+    SSheet = SFile_write["ACS"] # load setup sheet in .xlsx to sheet
 
-    Frequency_RF = sheet["C1"].value #
-    Level_RF = sheet["C2"].value #
-    Frequency_AF = sheet["C3"].value #
-    Deviation = sheet["C4"].value #
-    Mod_state = sheet["C5"].value #
-    RF_power_on = sheet["C6"].value #
+    Frequency_RF = SSheet["C1"].value #
+    Level_RF = SSheet["C2"].value #
+    Frequency_AF = SSheet["C3"].value #
+    Deviation = SSheet["C4"].value #
+    Mod_state = SSheet["C5"].value #
+    RF_power_on = SSheet["C6"].value #
 
     SML.write(f"*RST")
     SML.write("SYST:DISP:UPD ON")
@@ -45,13 +48,13 @@ def Adjacent_channel_selectivity(Test_frequency):
     # above codes are for setting standard test condition SML(FM) = 15.5dBuV
     SML.query('*OPC?')
     # below code block are for setting start point of SMB(interference) = 50dBuV
-    Frequency_RF1 = sheet["C8"].value #
-    Frequency_RF2 = sheet["D8"].value #
-    Level_RF = sheet["C9"].value #
-    Frequency_AF = sheet["C10"].value #
-    Deviation = sheet["C11"].value #
-    Mod_state = sheet["C12"].value #
-    RF_power_on = sheet["C13"].value #
+    Frequency_RF1 = SSheet["C8"].value #
+    Frequency_RF2 = SSheet["D8"].value #
+    Level_RF = SSheet["C9"].value #
+    Frequency_AF = SSheet["C10"].value #
+    Deviation = SSheet["C11"].value #
+    Mod_state = SSheet["C12"].value #
+    RF_power_on = SSheet["C13"].value #
 
     SMB.write(f"*RST")
     #SMB.write("SYST:DISP:UPD ON")
@@ -67,7 +70,7 @@ def Adjacent_channel_selectivity(Test_frequency):
     SMB.query('*OPC?')
 
     RFile_write = load_workbook(filename = "Test_Result.xlsx") # load Test_Result.xlsx
-    sheet = RFile_write["ACS"] # load "ACP" sheet in .xlsx
+    RSheet = RFile_write["ACS"] # load "ACP" sheet in .xlsx
 
     SINAD_data_str = CMS.query("SINAD:R?") # get initial SINAD value
     SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
@@ -76,8 +79,8 @@ def Adjacent_channel_selectivity(Test_frequency):
     # below code block are for ACS high side test
     i=1
     while float(SINAD_data_num) > 14.0:
-        sheet.cell(row = i+1, column = 1, value = Level_RF)
-        sheet.cell(row = i+1, column = 2, value = SINAD_data_num)
+        RSheet.cell(row = i+1, column = 1, value = Level_RF)
+        RSheet.cell(row = i+1, column = 2, value = SINAD_data_num)
         Level_RF = Level_RF + 1
         SMB.write(f":POW {Level_RF}")
         SMB.query('*OPC?')
@@ -85,17 +88,17 @@ def Adjacent_channel_selectivity(Test_frequency):
         SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
         print(f"SINAD+:{SINAD_data_num}")
         i = i+1
-    sheet.cell(row = i+1, column = 1, value = Level_RF)# complete last row entry
-    sheet.cell(row = i+1, column = 2, value = SINAD_data_num)# complete last row entry
+    RSheet.cell(row = i+1, column = 1, value = Level_RF)# complete last row entry
+    RSheet.cell(row = i+1, column = 2, value = SINAD_data_num)# complete last row entry
     ACS_high = float(SMB.query(f":POW? "))+3.5-(15.5-3.5)
-    sheet.cell(row = 2, column = 3, value = ACS_high)
+    RSheet.cell(row = 2, column = 3, value = ACS_high)
     RFile_write.save("Test_Result.xlsx") # save existing .xlsx file
     # above code block are for ACS high side test
 
     SMB.query('*OPC?')
     time.sleep(5)
     SMB.write(f":FREQ {Frequency_RF2}MHz")# prepare test again on the other side
-    Level_RF = sheet["C9"].value # reset SMB to original setting
+    Level_RF = SSheet["C9"].value # reset SMB level to original setting
     SINAD_data_str = CMS.query("SINAD:R?") # get initial SINA value
     SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
     print(f"Initial SINAD value for ACS-:{SINAD_data_num}")
@@ -103,8 +106,8 @@ def Adjacent_channel_selectivity(Test_frequency):
     # below code block are for ACS low side test
     i=1
     while float(SINAD_data_num) > 18.0:
-        sheet.cell(row = i+1, column = 4, value = Level_RF)
-        sheet.cell(row = i+1, column = 5, value = SINAD_data_num)
+        RSheet.cell(row = i+1, column = 4, value = Level_RF)
+        RSheet.cell(row = i+1, column = 5, value = SINAD_data_num)
         Level_RF = Level_RF + 1
         SMB.write(f":POW {Level_RF}")
         SMB.query('*OPC?')
@@ -112,10 +115,10 @@ def Adjacent_channel_selectivity(Test_frequency):
         SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
         print(f"SINAD-:{SINAD_data_num}")
         i = i+1
-    sheet.cell(row = i+1, column = 4, value = Level_RF)# complete last row entry
-    sheet.cell(row = i+1, column = 5, value = SINAD_data_num)# complete last row entry
+    RSheet.cell(row = i+1, column = 4, value = Level_RF)# complete last row entry
+    RSheet.cell(row = i+1, column = 5, value = SINAD_data_num)# complete last row entry
     ACS_low = float(SMB.query(f":POW? "))+3.5-(15.5-3.5)
-    sheet.cell(row = 2, column = 6, value = ACS_low)
+    RSheet.cell(row = 2, column = 6, value = ACS_low)
     RFile_write.save("Test_Result.xlsx") # save existing .xlsx file
     # above code block are for ACS low side test
 
