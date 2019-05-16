@@ -76,7 +76,7 @@ def Tx_Conducted_spurious_emissions():
     print("3. 30MHz-700MHz")
     print("4. 700MHz-1GHz")
     print("5. 1-4GHz")
-    print("0. exit")
+    print("0. Exit")
     while True:
         choice = input("> ")
         if choice == "1":
@@ -84,35 +84,39 @@ def Tx_Conducted_spurious_emissions():
             dict = Conducted_spurious_menu("Cond_Spurious_1")
             print(f"Mark frequency:{dict['Mark frequency']/1e3}kHz")
             print(f"Mark level:{dict['Mark level']}dBm")
-            exit(0)
+            break
         elif choice == "2":
             print("Check physical test setup: 30dB attenuator in line WITHOUT high pass filter ?")
             dict = Conducted_spurious_menu("Cond_Spurious_2")
             print(f"Mark frequency:{dict['Mark frequency']/1e6}MHz")
             print(f"Mark level:{dict['Mark level']}dBm")
-            exit(0)
+            break
         elif choice == "3":
             print("Check physical test setup: 30dB attenuator in line WTIHOUT high pass filter ?")
             dict = Conducted_spurious_menu("Cond_Spurious_3")
             print(f"Mark frequency:{dict['Mark frequency']/1e6}MHz")
             print(f"Mark level:{dict['Mark level']}dBm")
-            exit(0)
+            break
         elif choice == "4":
             print("Check physical test setup: 30dB attenuator in line WITH high pass filter NHP700+ ?")
             dict = Conducted_spurious_menu("Cond_Spurious_4")
             print(f"Mark frequency:{dict['Mark frequency']/1e6}MHz")
             print(f"Mark level:{dict['Mark level']}dBm")
-            exit(0)
+            break
         elif choice == "5":
             print("Check physical test setup: 30dB attenuator in line WITH high pass filter NHP700+ ?")
             dict = Conducted_spurious_menu("Cond_Spurious_5")
             print(f"Mark frequency:{dict['Mark frequency']/1e6}MHz")
             print(f"Mark level:{dict['Mark level']}dBm")
-            exit(0)
+            break
+
         elif choice == "0":
             exit(0)
         else:
             print("please enter number within the range from 0 to 5.")
+
+    Tx_Conducted_spurious_emissions() # go back to conducted spurious menu after break
+
 
 
 def Conducted_spurious_menu(frequency_range):
