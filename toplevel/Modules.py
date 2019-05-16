@@ -10,6 +10,7 @@ sys.path.insert(0, r'C:\Users\afan\documents\commercial-radio-test-suite\bottoml
 # a __init__.py file has to be exist in both "import from" and "import to" folder
 
 import config # containing global variables
+import Rx_Write_to_excel as RxW
 import FSV_screenshot as Scr
 import RadioControl as Rcon
 import FreqError_Power as FEP
@@ -17,6 +18,7 @@ import Max_Deviation as MAD
 import OOB_ModRes as OOB
 import ACP
 import Cond_Spur as Cons
+import ACS
 
 
 def Tx_Frequency_error_Carrier_power():
@@ -43,7 +45,7 @@ def Tx_Max_deviation():
 def Tx_Adjacent_channel_power():
     Test_frequency = input("Input test frequency in Mhz or press CTRL+C to quit > ")
     Rcon.RadioControl('com7', 'ON')
-    print(ACP.Tx_Adjacent_channel_power(Test_frequency))
+    print(ACP.Adjacent_channel_power(Test_frequency))
     Rcon.RadioControl('com7', 'OFF')
     file_name = input("To save the screenshot, input the filename (***.bmp) or press CTRL+C to quit > ")
     Scr.Screenshot(file_name)
@@ -150,7 +152,10 @@ def Rx_Spurious_emissions():
     exit(0)
 
 def Rx_Adjacent_channel_selectivity():
-    print("blank")
+    Test_frequency = input("Input test frequency in Mhz or press CTRL+C to quit > ")
+    dict = ACS.Adjacent_channel_selectivity(Test_frequency)
+    print (dict['Indication'])
+    print (f"ACS+: {dict['ACS_high']}, ACS-: {dict['ACS_low']}")
     exit(0)
 
 def Rx_Spurious_response_immunity():
