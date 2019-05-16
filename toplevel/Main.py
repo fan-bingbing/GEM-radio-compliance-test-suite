@@ -1,5 +1,10 @@
-from sys import exit
+import sys
 import Modules
+import config
+
+sys.path.insert(0, r'C:\Users\afan\documents\commercial-radio-test-suite\midlevel')
+sys.path.insert(0, r'C:\Users\afan\documents\commercial-radio-test-suite\bottomlevel')
+
 header = """
 GME Radio compliance test suite Version 1.0
 """
@@ -9,6 +14,8 @@ print(header)
 print("--------------------------------------------")
 
 # Test_Setup.xlsx has to be in the same folder where Main.py locate
+
+
 
 def Helloworld():
     print("Blank")
@@ -45,7 +52,7 @@ def ANZ4365():
         elif choice == "0":
             start()
         else:
-            print("please enter number within the range from 0 to 8.")
+            print("please enter number within the range from 0 to 7.")
 
 def ANZ4295():
     print("--------------------------------------------")
@@ -90,8 +97,10 @@ def start():
         if choice == "1":
             Helloworld()
         elif choice == "2":
+            config.limit_line_factor = 2 # assign limit line value info for conducted spurious test
             ANZ4365()
         elif choice == "3":
+            config.limit_line_factor = 3 # assign limit line value info for conducted spurious test
             ANZ4295()
         elif choice == "4":
             exit(0)
