@@ -70,13 +70,13 @@ def Blocking_immunity(Test_frequency):
     SMB.query('*OPC?')
 
     RFile_write = load_workbook(filename = "Test_Result.xlsx") # load Test_Result.xlsx
-    RSheet = RFile_write["Blocking"] # load "ACP" sheet in .xlsx
+    RSheet = RFile_write["Blocking"] # load "Blocking" sheet in .xlsx
 
     SINAD_data_str = CMS.query("SINAD:R?") # get initial SINAD value
     SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
     print(f"Initial SINAD value for BLK+:{SINAD_data_num}")
 
-    # below code block are for ACS high side test
+    # below code block are for Blocking high side test
     i=1
     while float(SINAD_data_num) > 14.0:
         RSheet.cell(row = i+1, column = 1, value = Level_RF)
@@ -93,7 +93,7 @@ def Blocking_immunity(Test_frequency):
     BLK_high = float(SMB.query(f":POW? "))+3.5-(15.5-3.5)
     RSheet.cell(row = 2, column = 3, value = BLK_high)
     RFile_write.save("Test_Result.xlsx") # save existing .xlsx file
-    # above code block are for ACS high side test
+    # above code block are for Blocking high side test
 
     SMB.query('*OPC?')
     time.sleep(5)
@@ -104,7 +104,7 @@ def Blocking_immunity(Test_frequency):
     SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
     print(f"Initial SINAD value for BLK-:{SINAD_data_num}")
 
-    # below code block are for ACS low side test
+    # below code block are for Blocking low side test
     i=1
     while float(SINAD_data_num) > 14.0:
         RSheet.cell(row = i+1, column = 4, value = Level_RF)
@@ -121,7 +121,7 @@ def Blocking_immunity(Test_frequency):
     BLK_low = float(SMB.query(f":POW? "))+3.5-(15.5-3.5)
     RSheet.cell(row = 2, column = 6, value = BLK_low)
     RFile_write.save("Test_Result.xlsx") # save existing .xlsx file
-    # above code block are for ACS low side test
+    # above code block are for Blocking low side test
 
     SMB.query('*OPC?')
     indication = (SMB.query("*OPC?")).replace("1","Blocking test Completed")
