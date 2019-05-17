@@ -99,6 +99,7 @@ def Adjacent_channel_selectivity(Test_frequency):
     time.sleep(5)
     SMB.write(f":FREQ {Frequency_RF2}MHz")# prepare test again on the other side
     Level_RF = SSheet["C9"].value # reset SMB level to original setting
+    SMB.write(f":POW {Level_RF}")
     SINAD_data_str = CMS.query("SINAD:R?") # get initial SINA value
     SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
     print(f"Initial SINAD value for ACS-:{SINAD_data_num}")
