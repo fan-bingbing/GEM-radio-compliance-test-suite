@@ -20,6 +20,7 @@ import ACP
 import Cond_Spur as Cons
 import ACS
 import Blocking as BLK
+import Spur_Res as SPR
 
 
 def Tx_Frequency_error_Carrier_power():
@@ -158,7 +159,10 @@ def Rx_Adjacent_channel_selectivity():
     exit(0)
 
 def Rx_Spurious_response_immunity():
-    print("blank")
+    Test_frequency = input("Input test frequency in Mhz or press CTRL+C to quit > ")
+    dict = SPR.Spurious_response_immunity(Test_frequency)
+    print (dict['Indication'])
+    print (f"Spurious response at 2*IF offset: {dict['Spur_Res']}")
     exit(0)
 
 
