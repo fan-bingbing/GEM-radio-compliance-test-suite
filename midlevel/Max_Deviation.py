@@ -11,23 +11,23 @@ def Max_Deviation(Test_frequency):
     Reading_list = [] # empty list for deviation result storage
 
     # below codes are for setting test frequency in Test_Setup.xlsx according to user's input
-    FSV_file_write = load_workbook(filename = "Test_Setup.xlsx") # load an existing .xlsx file
-    sheet = FSV_file_write["Max_Deviation"] # load existing sheet named "ACP"
-    sheet.cell(row = 1, column = 2, value = Test_frequency) # write test frequency in this sheet
-    FSV_file_write.save("Test_Setup.xlsx") # save existing .xlsx file
+    SFile_write = load_workbook(filename = "Test_Setup.xlsx") # load an existing .xlsx file
+    SSheet = SFile_write["Max_Deviation"] # load existing SSheet named "ACP"
+    SSheet.cell(row = 1, column = 2, value = Test_frequency) # write test frequency in this SSheet
+    SFile_write.save("Test_Setup.xlsx") # save existing .xlsx file
     # above codes are for setting test frequency in Test_Setup.xlsx according to user's input
 
 
     SML.clear()  # Clear instrument io buffers and status
     FSV.clear()
 
-    FSV_file_write = load_workbook(filename = "Test_Setup.xlsx") # create a workbook from existing .xlsx file
-    sheet = FSV_file_write["Max_Deviation"] # load setup sheet in .xlsx to sheet
+    SFile_write = load_workbook(filename = "Test_Setup.xlsx") # create a workbook from existing .xlsx file
+    SSheet = SFile_write["Max_Deviation"] # load setup SSheet in .xlsx to SSheet
 
     # following code is to initialize SML
-    Frequency_AF = sheet["G1"].value #
-    Level_AF = sheet["G2"].value #
-    AF_output_on = sheet["G3"].value #
+    Frequency_AF = SSheet["G1"].value #
+    Level_AF = SSheet["G2"].value #
+    AF_output_on = SSheet["G3"].value #
     SML.write(f"*RST")
     SML.write("SYST:DISP:UPD ON")
     SML.write(f":FM:INT:FREQ {Frequency_AF}kHz")
@@ -38,16 +38,16 @@ def Max_Deviation(Test_frequency):
     # above code is to initialize SML
 
     # following code is to initialize FSV
-    Centre_frequency = sheet["B1"].value #
-    Dev_PerDivision = sheet["B2"].value #
-    Demod_BW = sheet["B3"].value #
-    AF_Couple = sheet["B4"].value #
-    RF_level = sheet["B5"].value #
-    Attenuation = sheet["B6"].value # get attenuation
-    RefLev_offset = sheet["B7"].value# get RFlevel offset
-    Trace_Peak = sheet["B8"].value # get trace to Pos peak
-    Demod_MT = sheet["B9"].value #
-    Cont_sweep = sheet["B10"].value #
+    Centre_frequency = SSheet["B1"].value #
+    Dev_PerDivision = SSheet["B2"].value #
+    Demod_BW = SSheet["B3"].value #
+    AF_Couple = SSheet["B4"].value #
+    RF_level = SSheet["B5"].value #
+    Attenuation = SSheet["B6"].value # get attenuation
+    RefLev_offset = SSheet["B7"].value# get RFlevel offset
+    Trace_Peak = SSheet["B8"].value # get trace to Pos peak
+    Demod_MT = SSheet["B9"].value #
+    Cont_sweep = SSheet["B10"].value #
     FSV.write(f"*RST")
     FSV.write("SYST:DISP:UPD ON")
     FSV.write("ADEM ON")
@@ -94,6 +94,9 @@ def Max_Deviation(Test_frequency):
 
     SML.query('*OPC?')
 
+    RFile_write = load_workbook(filename = "Test_Result.xlsx") # load Test_Result.xlsx
+    RSheet = RFile_write["Max_Dev"] # load "Max_Dev" sheet in .xlsx
+
     #following code is to vary audio frequency to complete the test
     Level_AF = 100*Level_AF # bring audio level up 20dB in one step according to standard
     SML.write(f":OUTP2:VOLT {Level_AF}mV")
@@ -103,11 +106,15 @@ def Max_Deviation(Test_frequency):
         SML.query('*OPC?')
         FSV.write(f"INIT:CONT OFF")
         time.sleep(1)
-        Reading_list.append(float(FSV.query("CALC:MARK:FUNC:ADEM:FM? MIDD"))/1000)
+        Dev = float(FSV.query("CALC:MARK:FUNC:ADEM:FM? MIDD"))/1000
+        Reading_list.append(Dev)
         FSV.query("*OPC?")
         FSV.write(f"INIT:CONT ON")
         print(f"Deviation is {Reading_list[i]}kHz")
+        RSheet.cell(row = i+2, column = 1, value = AF_list[i])
+        RSheet.cell(row = i+2, column = 2, value = Dev)
 
+    RFile_write.save("Test_Result.xlsx") # save existing .xlsx file
     SML.write(":OUTP2 OFF")# turn off audio output at the end of the test
     indication = (FSV.query("*OPC?")).replace("1","Completed")
     Reading_list.append(indication)
