@@ -2,6 +2,10 @@ import visa
 import time
 from openpyxl import load_workbook
 
+# naming rules for excel:
+# 1. for operating variables related to Test_Setup.xlsx: use SFile_write, SSheet
+# 2. for operating variables related to Test_Result.xlsx: use RFile_write, RSheet
+
 
 def Max_Deviation(Test_frequency):
     rm = visa.ResourceManager()
