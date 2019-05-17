@@ -19,6 +19,7 @@ import OOB_ModRes as OOB
 import ACP
 import Cond_Spur as Cons
 import ACS
+import Blocking as BLK
 
 
 def Tx_Frequency_error_Carrier_power():
@@ -145,8 +146,6 @@ def Conducted_spurious_menu(frequency_range):
             print("please enter number within the range from 1 or 2.")
 
 
-
-
 def Rx_Spurious_emissions():
     print("blank")
     exit(0)
@@ -164,5 +163,8 @@ def Rx_Spurious_response_immunity():
 
 
 def Rx_Blocking_immunity():
-    print("blank")
+    Test_frequency = input("Input test frequency in Mhz or press CTRL+C to quit > ")
+    dict = BLK.Blocking_immunity(Test_frequency)
+    print (dict['Indication'])
+    print (f"BLK+: {dict['BLK_high']}, BLK-: {dict['BLK_low']}")
     exit(0)
