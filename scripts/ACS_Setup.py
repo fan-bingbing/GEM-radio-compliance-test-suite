@@ -65,9 +65,9 @@ ws_SINAD = SINAD_file.active
 ws_SINAD.title = "SINAD"
 
 SINAD_data_str = CMS.query("SINAD:R?")
+print(SINAD_data_str)
 SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
 print(SINAD_data_num)
-
 while float(SINAD_data_num) > 14.0:
     i=0
     ws_SINAD.cell(row = i+1, column = 1, value = SINAD_data_num)
@@ -75,16 +75,17 @@ while float(SINAD_data_num) > 14.0:
     SMB.write(f":POW {Level_RF}")
     SMB.query('*OPC?')
     SINAD_data_str = CMS.query("SINAD:R?")
-    SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
-    print(SINAD_data_num)
+    SINAD_data_num = re.findall(r'\d', SINAD_data_str)[0]# handle return value of 0
+    if SINAD_data_num != '0':
+        SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
+        print(SINAD_data_num)
+    else:
+        break
 
-ACS = float(SMB.query(f":POW? "))+3.5-(15.5-3.5)
+ACS = float(SMB.query(f":POW? "))+3.5-(45.5-3.5)
 print(f"Adjacent Channel Selectivity result:{ACS}")
 
-
-
 SINAD_file.save("SINAD.xlsx")
-
 SML.close()
 SMB.close()
 #FSV.clear()
