@@ -69,10 +69,10 @@ for i in range(0,100):
     else:
         break
 
-Sensitivity = float(SML.query(f":POW? "))-(6+3.5+30)
+Sensitivity = float(SML.query(f":POW? "))-(3.5+30)# query result in dBm
 RSheet.cell(row = 2, column = 3, value = Sensitivity)
 print(f"Sensitivity:{Sensitivity} in dBm")
-print(f"Sensitivity:{Sensitivity+107} in dBuV")
+print(f"Sensitivity:{Sensitivity+107+6} in dBuV emf")# wanted signal expressed as emf value
 # above code block to test Sensitivity
 
 
