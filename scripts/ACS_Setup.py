@@ -1,30 +1,34 @@
 import visa
 from openpyxl import load_workbook
-from openpyxl import Workbook
 import re
+import time
+
+# naming rules for excel:
+# 1. for operating variables related to Test_Setup.xlsx: use SFile_write, SSheet
+# 2. for operating variables related to Test_Result.xlsx: use RFile_write, RSheet
+
+
 
 rm = visa.ResourceManager()
-
 SML = rm.open_resource('ASRL4::INSTR') # wanted Signal
 SMB = rm.open_resource('USB0::0x0AAD::0x0054::106409::INSTR') # Unwanted Signal
-#FSV = rm.open_resource('TCPIP0::192.168.10.9::hislip0::INSTR') # Spec An
 CMS = rm.open_resource('GPIB0::24::INSTR') # Audio Analyzer
 
 #scope.write_termination = '\n'
 SML.clear()  # Clear instrument io buffers and status
 SMB.clear()
-#FSV.clear()
 CMS.clear()
 
-File_write = load_workbook(filename = "Test_Setup.xlsx") # create a workbook from existing .xlsx file
-sheet = File_write["ACS"] # load setup sheet in .xlsx to sheet
+SFile_write = load_workbook(filename = "Test_Setup.xlsx") # open "Test_Setup.xlsx"
+SSheet = SFile_write["ACS"] # load "ACS" sheet
 
-Frequency_RF = sheet["C1"].value #
-Level_RF = sheet["C2"].value #
-Frequency_AF = sheet["C3"].value #
-Deviation = sheet["C4"].value #
-Mod_state = sheet["C5"].value #
-RF_power_on = sheet["C6"].value #
+# below code block to configure SML to standard teset condition
+Frequency_RF = SSheet["C1"].value #
+Level_RF = SSheet["C2"].value #
+Frequency_AF = SSheet["C3"].value #
+Deviation = SSheet["C4"].value #
+Mod_state = SSheet["C5"].value #
+RF_power_on = SSheet["C6"].value #
 
 SML.write(f"*RST")
 SML.write("SYST:DISP:UPD ON")
@@ -36,19 +40,21 @@ SML.write(f":FM:DEV {Deviation}kHz")
 SML.write(f":FM:STAT {Mod_state}")
 SML.write(f":OUTP1 {RF_power_on}")
 
-#SML.timeout = 1000  # Acquisition timeout in milliseconds - set it higher than the sweep time
 SML.query('*OPC?')
+# above code block to configure SML to standard teset condition
 
-Frequency_RF = sheet["C8"].value #
-Level_RF = sheet["C9"].value #
-Frequency_AF = sheet["C10"].value #
-Deviation = sheet["C11"].value #
-Mod_state = sheet["C12"].value #
-RF_power_on = sheet["C13"].value #
+# below code block to configure SMB to initial status
+Frequency_RF1 = SSheet["C8"].value #
+Frequency_RF2 = SSheet["D8"].value #
+Level_RF = SSheet["C9"].value #
+Frequency_AF = SSheet["C10"].value #
+Deviation = SSheet["C11"].value #
+Mod_state = SSheet["C12"].value #
+RF_power_on = SSheet["C13"].value #
 
 SMB.write(f"*RST")
 #SMB.write("SYST:DISP:UPD ON")
-SMB.write(f":FREQ {Frequency_RF}MHz")
+SMB.write(f":FREQ {Frequency_RF1}MHz")
 SMB.write(f":UNIT:POW dBuV")
 SMB.write(f":POW {Level_RF}")
 SMB.write(f":FM:INT:FREQ {Frequency_AF}Hz")
@@ -56,22 +62,23 @@ SMB.write(f":FM:DEV {Deviation}kHz")
 SMB.write(f":FM:STAT {Mod_state}")
 SMB.write(f":OUTP1 {RF_power_on}")
 
-#SMB.timeout = 1000  # Acquisition timeout in milliseconds - set it higher than the sweep time
 SMB.query('*OPC?')
+# above code block to configure SMB to initial status
 
+RFile_write = load_workbook(filename = "Test_Result.xlsx") # load Test_Result.xlsx
+RSheet = RFile_write["ACS"] # load "ACS" sheet
 
-SINAD_file = Workbook()#
-ws_SINAD = SINAD_file.active
-ws_SINAD.title = "SINAD"
-
+# read initial SINAD
 SINAD_data_str = CMS.query("SINAD:R?")
-print(SINAD_data_str)
+#print(SINAD_data_str)
 SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
 print(SINAD_data_num)
-#while float(SINAD_data_num) > 14.0:
+
+# below code block to test ACS+
 for i in range(0,100):
     if float(SINAD_data_num) > 14.0:
-        ws_SINAD.cell(row = i+1, column = 1, value = SINAD_data_num)
+        RSheet.cell(row = i+2, column = 1, value = Level_RF)
+        RSheet.cell(row = i+2, column = 2, value = SINAD_data_num)
         Level_RF = Level_RF + 1
         SMB.write(f":POW {Level_RF}")
         SMB.query('*OPC?')
@@ -85,27 +92,45 @@ for i in range(0,100):
     else:
         break
 
+ACS = float(SMB.query(f":POW? "))+3.5-(45.5-3.5)
+RSheet.cell(row = 2, column = 3, value = ACS)
+print(f"ACS+:{ACS}")
+# above code block to test ACS+
 
+# prepare to test ACS-, reinitialize SMB
+SMB.write(f":FREQ {Frequency_RF2}MHz")# prepare test again on the other side
+Level_RF = SSheet["C9"].value # reset SMB level to original setting
+SMB.write(f":POW {Level_RF}")
+time.sleep(5)# wait 5 seconds for CMS to get none-zero value
+SINAD_data_str = CMS.query("SINAD:R?") # get initial SINA value
+SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
+print(SINAD_data_num)
 
-
-    # i=0
-    # ws_SINAD.cell(row = i+1, column = 1, value = SINAD_data_num)
-    # Level_RF = Level_RF + 1
-    # SMB.write(f":POW {Level_RF}")
-    # SMB.query('*OPC?')
-    # SINAD_data_str = CMS.query("SINAD:R?")
-    # SINAD_data_num = re.findall(r'\d', SINAD_data_str)[0]# handle return value of 0
-    # if SINAD_data_num != '0':
-    #     SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
-    #     print(SINAD_data_num)
-    # else:
-    #     break
+# below code block to test ACS-
+for i in range(0,100):
+    if float(SINAD_data_num) > 14.0:
+        RSheet.cell(row = i+2, column = 7, value = Level_RF)
+        RSheet.cell(row = i+2, column = 8, value = SINAD_data_num)
+        Level_RF = Level_RF + 1
+        SMB.write(f":POW {Level_RF}")
+        SMB.query('*OPC?')
+        SINAD_data_str = CMS.query("SINAD:R?")
+        SINAD_data_num = re.findall(r'\d', SINAD_data_str)[0]# handle return value of 0
+        if SINAD_data_num != '0':
+            SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
+            print(SINAD_data_num)
+        else:
+            break
+    else:
+        break
 
 ACS = float(SMB.query(f":POW? "))+3.5-(45.5-3.5)
-print(f"Adjacent Channel Selectivity result:{ACS}")
+RSheet.cell(row = 2, column = 9, value = ACS)
+print(f"ACS-:{ACS}")
+#above code block to test ACS-
 
-SINAD_file.save("SINAD.xlsx")
+
+RFile_write.save("Test_Result.xlsx")# save result
 SML.close()
 SMB.close()
-#FSV.clear()
 CMS.close()
