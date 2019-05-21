@@ -92,7 +92,7 @@ for i in range(0,100):
     else:
         break
 
-ACS = float(SMB.query(f":POW? "))+3.5-(45.5-3.5)
+ACS = float(SMB.query(f":POW? "))-(45.5-6) # wanted signal expressed as dBuV emf
 RSheet.cell(row = 2, column = 3, value = ACS)
 print(f"ACS+:{ACS}")
 # above code block to test ACS+
@@ -124,7 +124,7 @@ for i in range(0,100):
     else:
         break
 
-ACS = float(SMB.query(f":POW? "))+3.5-(45.5-3.5)
+ACS = float(SMB.query(f":POW? "))-(45.5-6) # wanted signal expressed as dBuV emf
 RSheet.cell(row = 2, column = 9, value = ACS)
 print(f"ACS-:{ACS}")
 #above code block to test ACS-
