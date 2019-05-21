@@ -91,7 +91,7 @@ for i in range(0,100):
     else:
         break
 
-CCR = float(SMB.query(f":POW? "))- 45.5 # ?
+CCR = float(SMB.query(f":POW? "))- 45.5 # wanted and unwanted both on channel, no 6dB convertion
 RSheet.cell(row = 2, column = 3, value = CCR)
 print(f"CCR:{CCR}")
 # above code block to test CCR
