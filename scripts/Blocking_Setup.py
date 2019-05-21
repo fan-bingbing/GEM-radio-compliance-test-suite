@@ -77,16 +77,19 @@ print(SINAD_data_num)
 # below code block to test BLK+
 for i in range(0,100):
     if float(SINAD_data_num) > 14.0:
-        RSheet.cell(row = i+2, column = 1, value = Level_RF)
-        RSheet.cell(row = i+2, column = 2, value = SINAD_data_num)
+        RSheet.cell(row = i+2, column = 7, value = Level_RF)
+        RSheet.cell(row = i+2, column = 8, value = SINAD_data_num)
         Level_RF = Level_RF + 1
-        SMB.write(f":POW {Level_RF}")
-        SMB.query('*OPC?')
-        SINAD_data_str = CMS.query("SINAD:R?")
-        SINAD_data_num = re.findall(r'\d', SINAD_data_str)[0]# handle return value of 0
-        if SINAD_data_num != '0':
-            SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
-            print(SINAD_data_num)
+        if Level_RF <= 133: # SMB maximum leve output is 135dBuV
+            SMB.write(f":POW {Level_RF}")
+            SMB.query('*OPC?')
+            SINAD_data_str = CMS.query("SINAD:R?")
+            SINAD_data_num = re.findall(r'\d', SINAD_data_str)[0]# handle return value of 0
+            if SINAD_data_num != '0':
+                SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
+                print(SINAD_data_num)
+            else:
+                break
         else:
             break
     else:
