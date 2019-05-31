@@ -108,7 +108,7 @@ for i in range(0,3):
     CM60_Control.Radio_Con('com3', 9600, None, payload3)# set audio
     time.sleep(1)
     FSV.write(f"DISP:TRAC:MODE AVER")
-    time.sleep(5)
+    time.sleep(3)
     ACP = FSV.query("CALC:MARK:FUNC:POW:RES? ACP")
     LIST = re.findall(r'\d+\.\d+', ACP)
 
