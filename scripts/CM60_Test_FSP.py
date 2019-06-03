@@ -155,4 +155,4 @@ for i in range(0,3):
 #print(FSV.query("*OPC?")).replace("1","ACP test Completed") # replace return character "1" to "completed"
 
 FSV.close()
-#SE.SendEmail("Test update", "fanyu1980@hotmail.com", "afan@gme.net.au", Timestamp)
+SE.SendEmail("Test update", "fanyu1980@hotmail.com", "afan@gme.net.au", Timestamp)
