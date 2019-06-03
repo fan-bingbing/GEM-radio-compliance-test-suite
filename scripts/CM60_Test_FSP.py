@@ -3,6 +3,12 @@ from openpyxl import load_workbook
 import time
 import re
 import CM60_Control
+import datetime
+import sys
+
+
+sys.path.insert(0, r'C:\Users\Aaron Fan\Documents\GEM-radio-compliance-test-suite\bottomlevel')
+import send_email_FSP as SE
 
 
 payload0 = bytearray(b'\xB4\x88\x2a\x80')# set carrie freq 136MHz basd on 12.5kHz calculation
@@ -111,15 +117,19 @@ for i in range(0,3):
     time.sleep(3)
     ACP = FSV.query("CALC:MARK:FUNC:POW:RES? ACP")
     LIST = re.findall(r'\d+\.\d+', ACP)
+    Timestamp ='{:%d-%b-%Y %H:%M:%S}'.format(datetime.datetime.now())
 
 
     print(LIST)
-
+    print(Timestamp)
 
     RSheet.cell(row = i+2, column = 1, value = Centre_frequency)
     RSheet.cell(row = i+2, column = 2, value = float(LIST[0]))
     RSheet.cell(row = i+2, column = 3, value = -float(LIST[1]))
     RSheet.cell(row = i+2, column = 4, value = -float(LIST[2]))
+    RSheet.cell(row = i+2, column = 5, value = Timestamp)
+
+
     RFile_write.save("CM60_Result.xlsx") # save existing .xlsx file
     FSV.query("*OPC?")
     CM60_Control.Radio_Con('com3', 9600, None, payload8) # PTT off
@@ -145,3 +155,4 @@ for i in range(0,3):
 #print(FSV.query("*OPC?")).replace("1","ACP test Completed") # replace return character "1" to "completed"
 
 FSV.close()
+#SE.SendEmail("Test update", "fanyu1980@hotmail.com", "afan@gme.net.au", Timestamp)
