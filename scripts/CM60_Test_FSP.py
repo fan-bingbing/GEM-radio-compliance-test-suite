@@ -7,7 +7,7 @@ import datetime
 import sys
 
 
-sys.path.insert(0, r'C:\Users\Aaron Fan\Documents\GEM-radio-compliance-test-suite\bottomlevel')
+sys.path.insert(0, r'C:\Users\Aaron Fan\Documents\GEM-radio-compliance-test-suite\midlevel')
 import send_email_FSP as SE
 
 
