@@ -13,17 +13,22 @@ plt.subplot(2,1,1)
 plt.plot(t, x);plt.title('Sinusoidal Signal')
 plt.xlabel('Time(s)');plt.ylabel('Amplitude')
 #plt.show()
+
 #generate frequency axis
 n = np.size(t)
 # frequency axis from 0 to fs/2 (nykuist frequency) which is the first half of fft result
 fr = (fs/2)*np.linspace(0, 1, n/2)
 
 X = fft(x)
-X_m = (2/n)*abs(X[0:np.size(fr)])#(2/n) is for magnitude normilization
 
+#(2/n) is for magnitude normilization
+# abs is to take magnitude component of fft result array
+X_m = (2/n)*abs(X[0:np.size(fr)])
 
 
 
 plt.subplot(2,1,2)
-plt.plot(fr, X_m)
+plt.plot(fr, X_m); plt.title('Magnitude Spectrum')
+plt.xlabel('Frequency(Hz)'); plt.ylabel('Magnitude')
+plt.tight_layout()# make sure two plots are not overlapped
 plt.show()
