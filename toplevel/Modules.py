@@ -32,7 +32,7 @@ sys.path.insert(0, r'C:\Users\afan\kallithea\aaron test\toplevel')
 class SoundCard(object):
     def __init__(self):
         self.gain = 10
-        self.duration = 0.1
+        self.duration = 0.1 # sample record duration
         self.sample_rate = 44100
         self.device = ('Microphone (Sound Blaster Play!, MME',
                        'Speakers (Sound Blaster Play! 3, MME')
@@ -46,16 +46,15 @@ class SoundCard(object):
         x2 = self.gain*x1[int(self.duration*self.sample_rate/1000):int(self.duration*self.sample_rate)] # take effective samples
         x3 = x2[0:int(80*(self.sample_rate/1000))] # take first 80ms duration samples
         x4 = x3.flatten()# transfer 2D array to 1D, ready for fft operation, fft function can only take 1D array as input
-        t = 80*np.linspace(0, 1, np.size(x4))# generate 80ms time axis VS samples in first 80ms
+        t = 80*np.linspace(0, 1, np.size(x4))# generate 80ms time axis VS samples for first 80ms
 
-        X = fft(x4)
+        X = fft(x4) # fft transform
         n = np.size(t)
-        fr = (self.sample_rate/2)*np.linspace(0, 1, int(n/2))
+        fr = (self.sample_rate/2)*np.linspace(0, 1, int(n/2)) # generate frequecny axis array
         X_m = (2/n)*abs(X[0:np.size(fr)])
         return {'Time_level':x4, 'Time':t, 'Freq_level':X_m, 'Freq':fr}
 
     def get_SINAD(self, dict):
-
         X_mmax = np.max(dict['Freq_level']) # find maximum value in numpy array
         fr_index = np.where(dict['Freq_level'] == X_mmax) # locate index in numpy array
         fr_max = dict['Freq'][fr_index] # find corresponding frequency of maximum value
@@ -63,7 +62,7 @@ class SoundCard(object):
         mask = np.full(np.size(dict['Freq']), 1) # initialize a mask numpy array with size=fr, value=1
 
         mask[fr_index[0]]=0 # make notch filter mask by assigning some points=0 where certain bandwidth of carrier was covered
-        for i in range(1,45): # notch filter cover 40 bins
+        for i in range(1,41): # notch filter cover 40 bins
             mask[fr_index[0]-i]=0
             mask[fr_index[0]+i]=0
 
@@ -72,7 +71,6 @@ class SoundCard(object):
         SINAD = 20 * np.log10(SND/ND) # calculate SINAD
         return SINAD
 
-
     def live_plots(self):
         dict = self.get_sample()
         fig, (ax0, ax1) = plt.subplots(nrows=2)
@@ -80,287 +78,259 @@ class SoundCard(object):
         ax0.set_xlabel('Time(ms)')
         ax0.set_ylabel('Amplitude')
         ax0.set_ylim(-2, 2)
-        line0, = ax0.plot(dict['Time'], dict['Time_level'])
+        line0, = ax0.plot(dict['Time'], dict['Time_level']) # time VS level plot
 
         ax1.set_title('Magnitude Spectrum')
         ax1.set_xlabel('Frequency(Hz)')
         ax1.set_ylabel('Magnitude')
         ax1.set_ylim(0, 1.5)
         ax3 = ax1.text(0.3, 0.9, 'SINAD', transform=ax1.transAxes)
-        line1, = ax1.plot(dict['Freq'], dict['Freq_level'])
+        line1, = ax1.plot(dict['Freq'], dict['Freq_level']) # frequency VS level plot
 
         fig.subplots_adjust(hspace=0.6)
 
         while True:
             dict = self.get_sample()
-            line0.set_ydata(dict['Time_level']) #update data in plots only in loop instead of update entire plots
+            line0.set_ydata(dict['Time_level']) # update data in plots only in loop instead of update entire plots
             line1.set_ydata(dict['Freq_level'])
             ax3.set_text('SINAD = %.2f dB' % self.get_SINAD(dict=dict)) # update SINAD value
 
             plt.pause(0.01)# this command will call plt.show()
 
 class SpecAn(object):
-
     def __init__(self, address):
         self.rm = visa.ResourceManager()
         self.SP = self.rm.open_resource(address) # Spec An
         self.book = load_workbook(filename = "Test_Setup.xlsx") # load an existing .xlsx file
 
-
     def FEP_Setup(self, freq):
-
-        self.sheet = self.book["Freq_Error_Power"] # load excel sheet
-
+        sheet = self.book["Freq_Error_Power"] # load excel sheet
         # below codes are for setting test frequency in Test_Setup.xlsx according to user's input
-        self.sheet.cell(row = 1, column = 2, value = freq) # write test frequency in this self.sheet
+        sheet.cell(row = 1, column = 2, value = freq) # write test frequency
         self.book.save("Test_Setup.xlsx") # save existing .xlsx file
         # above codes are for setting test frequency in Test_Setup.xlsx according to user's input
 
-        self.Centre_frequency = self.sheet["B1"].value #
-        self.Span_frequency = self.sheet["B2"].value #
-        self.RBW = self.sheet["B3"].value #
-        self.VBW = self.sheet["B4"].value #
-        self.RF_level = self.sheet["B5"].value #
-        self.Attenuation = self.sheet["B6"].value #
-        self.RefLev_offset = self.sheet["B7"].value#
-        self.Trace_peak = self.sheet["B8"].value #
-        self.Transducer1 = self.sheet["B9"].value # cable
-        self.Trans1_ON = self.sheet["B10"].value
-        self.Transducer2 = self.sheet["B11"].value # 30dB attenuator
-        self.Trans2_ON = self.sheet["B12"].value
-        self.Transducer3 = self.sheet["B13"].value # High pass filter
-        self.Trans3_ON = self.sheet["B14"].value
-        self.Limit_line_1 = self.sheet["B15"].value # ASNZS4365:2011
-        self.Limit_line_1_ON = self.sheet["B16"].value # ASNZS4365:2011
-        self.Limit_line_2 = self.sheet["B17"].value # ASNZS4295:2015
-        self.Limit_line_2_ON = self.sheet["B18"].value # ASNZS4295:2015
-        self.Sweep_points= self.sheet["B19"].value # get sweep points
+        Centre_frequency = sheet["B1"].value # get all parameters from Test_Setup.xlsx
+        Span_frequency = sheet["B2"].value
+        RBW = sheet["B3"].value
+        VBW = sheet["B4"].value
+        RF_level = sheet["B5"].value
+        Attenuation = sheet["B6"].value
+        RefLev_offset = sheet["B7"].value
+        Trace_peak = sheet["B8"].value
+        Transducer1 = sheet["B9"].value # cable
+        Trans1_ON = sheet["B10"].value
+        Transducer2 = sheet["B11"].value # 30dB attenuator
+        Trans2_ON = sheet["B12"].value
+        Transducer3 = sheet["B13"].value # High pass filter
+        Trans3_ON = sheet["B14"].value
+        Limit_line_1 = sheet["B15"].value # ASNZS4365:2011
+        Limit_line_1_ON = sheet["B16"].value # ASNZS4365:2011
+        Limit_line_2 = sheet["B17"].value # ASNZS4295:2015
+        Limit_line_2_ON = sheet["B18"].value # ASNZS4295:2015
+        Sweep_points= sheet["B19"].value # get sweep points
 
-        self.SP.write(f"*RST")
+        self.SP.write(f"*RST") # write all paramaters to SpecAn
         self.SP.write("SYST:DISP:UPD ON")
-        self.SP.write(f"FREQ:CENT {self.Centre_frequency}MHz")
-        self.SP.write(f"FREQ:SPAN {self.Span_frequency}Hz")
-        self.SP.write(f"BAND {self.RBW}Hz")
-        self.SP.write(f"BAND:VID {self.VBW}Hz")
-        self.SP.write(f"DISP:TRAC:Y:RLEV:OFFS {self.RefLev_offset}")
-        self.SP.write(f"DISP:TRAC:Y:RLEV {self.RF_level}")
-        self.SP.write(f"INP:ATT {self.Attenuation}")
-        self.SP.write(f"{self.RefLev_offset}")
-        self.SP.write(f"{self.Trace_peak}")
-        self.SP.write(f"CORR:TRAN:SEL '{self.Transducer1}'")
-        self.SP.write(f"CORR:TRAN {self.Trans1_ON} ")
-        self.SP.write(f"CORR:TRAN:SEL '{self.Transducer2}'")
-        self.SP.write(f"CORR:TRAN {self.Trans2_ON}")
-        self.SP.write(f"CORR:TRAN:SEL '{self.Transducer3}'")
-        self.SP.write(f"CORR:TRAN {self.Trans3_ON}")
-        self.SP.write(f"CALC:LIM:NAME '{self.Limit_line_1}'")
-        self.SP.write(f"CALC:LIM:UPP:STAT {self.Limit_line_1_ON}")
-        self.SP.write(f"CALC:LIM:NAME '{self.Limit_line_2}'")
-        self.SP.write(f"CALC:LIM:UPP:STAT {self.Limit_line_2_ON}")
-        self.SP.write(f"SWE:POIN {self.Sweep_points}")
+        self.SP.write(f"FREQ:CENT {Centre_frequency}MHz")
+        self.SP.write(f"FREQ:SPAN {Span_frequency}Hz")
+        self.SP.write(f"BAND {RBW}Hz")
+        self.SP.write(f"BAND:VID {VBW}Hz")
+        self.SP.write(f"DISP:TRAC:Y:RLEV:OFFS {RefLev_offset}")
+        self.SP.write(f"DISP:TRAC:Y:RLEV {RF_level}")
+        self.SP.write(f"INP:ATT {Attenuation}")
+        self.SP.write(f"{RefLev_offset}")
+        self.SP.write(f"{Trace_peak}")
+        self.SP.write(f"CORR:TRAN:SEL '{Transducer1}'")
+        self.SP.write(f"CORR:TRAN {Trans1_ON} ")
+        self.SP.write(f"CORR:TRAN:SEL '{Transducer2}'")
+        self.SP.write(f"CORR:TRAN {Trans2_ON}")
+        self.SP.write(f"CORR:TRAN:SEL '{Transducer3}'")
+        self.SP.write(f"CORR:TRAN {Trans3_ON}")
+        self.SP.write(f"CALC:LIM:NAME '{Limit_line_1}'")
+        self.SP.write(f"CALC:LIM:UPP:STAT {Limit_line_1_ON}")
+        self.SP.write(f"CALC:LIM:NAME '{Limit_line_2}'")
+        self.SP.write(f"CALC:LIM:UPP:STAT {Limit_line_2_ON}")
+        self.SP.write(f"SWE:POIN {Sweep_points}")
 
 
     def DeMod_Setup(self, freq):
-        self.sheet = self.book["Analog_Demod"]
-        # below codes are for setting test frequency in Test_Setup.xlsx according to user's input
-        self.sheet.cell(row = 1, column = 2, value = freq) # write test frequency in this self.sheet
-        self.book.save("Test_Setup.xlsx") # save existing .xlsx file
-        # above codes are for setting test frequency in Test_Setup.xlsx according to user's input
+        sheet = self.book["Analog_Demod"]
+        sheet.cell(row = 1, column = 2, value = freq)
+        self.book.save("Test_Setup.xlsx")
 
-        # following code is to initialize FSV
-        self.Centre_frequency = self.sheet["B1"].value #
-        self.Dev_PerDivision = self.sheet["B2"].value #
-        self.Demod_BW = self.sheet["B3"].value #
-        self.AF_Couple = self.sheet["B4"].value #
-        self.RF_level = self.sheet["B5"].value #
-        self.Attenuation = self.sheet["B6"].value # get attenuation
-        self.RefLev_offset = self.sheet["B7"].value# get RFlevel offset
-        self.Trace_Peak = self.sheet["B8"].value # get trace to Pos peak
-        self.Demod_MT = self.sheet["B9"].value #
-        self.Cont_sweep = self.sheet["B10"].value #
-        self.SP.write(f"*RST")
+        Centre_frequency = sheet["B1"].value #get all parameters from Test_Setup.xlsx
+        Dev_PerDivision = sheet["B2"].value
+        Demod_BW = sheet["B3"].value
+        AF_Couple = sheet["B4"].value
+        RF_level = sheet["B5"].value
+        Attenuation = sheet["B6"].value
+        RefLev_offset = sheet["B7"].value
+        Trace_Peak = sheet["B8"].value
+        Demod_MT = sheet["B9"].value
+        Cont_sweep = sheet["B10"].value
+
+        self.SP.write(f"*RST") # write all paramaters to SpecAn
         self.SP.write("SYST:DISP:UPD ON")
         self.SP.write("ADEM ON")
-        self.SP.write(f"FREQ:CENT {self.Centre_frequency}MHz")
-        self.SP.write(f"DISP:TRAC:Y:PDIV {self.Dev_PerDivision}kHz")
-        self.SP.write(f"BAND:DEM {self.Demod_BW}kHz")
-        self.SP.write(f"ADEM:AF:COUP {self.AF_Couple}")#Set AF coupling to AC, the frequency offset is automatically corrected.
+        self.SP.write(f"FREQ:CENT {Centre_frequency}MHz")
+        self.SP.write(f"DISP:TRAC:Y:PDIV {Dev_PerDivision}kHz")
+        self.SP.write(f"BAND:DEM {Demod_BW}kHz")
+        self.SP.write(f"ADEM:AF:COUP {AF_Couple}")#Set AF coupling to AC, the frequency offset is automatically corrected.
         # i.e. the trace is always symmetric with respect to the zero line
-        self.SP.write(f"DISP:TRAC:Y:RLEV:OFFS {self.RefLev_offset}")
-        self.SP.write(f"DISP:TRAC:Y:RLEV {self.RF_level}")
-        self.SP.write(f"INP:ATT {self.Attenuation}")
-        self.SP.write(f"{self.Trace_Peak}")
-        self.SP.write(f"ADEM:MTIM {self.Demod_MT}ms")
-        self.SP.write(f"INIT:CONT {self.Cont_sweep}")
-        # above code is to initialize FSV
+        self.SP.write(f"DISP:TRAC:Y:RLEV:OFFS {RefLev_offset}")
+        self.SP.write(f"DISP:TRAC:Y:RLEV {RF_level}")
+        self.SP.write(f"INP:ATT {Attenuation}")
+        self.SP.write(f"{Trace_Peak}")
+        self.SP.write(f"ADEM:MTIM {Demod_MT}ms")
+        self.SP.write(f"INIT:CONT {Cont_sweep}")
+
 
     def ACP_Setup(self, freq):
-        self.sheet = self.book["ACP"]
-        # below codes are for setting test frequency in Test_Setup.xlsx according to user's input
-        self.sheet.cell(row = 1, column = 2, value = freq) # write test frequency in this self.sheet
-        self.book.save("Test_Setup.xlsx") # save existing .xlsx file
-        # above codes are for setting test frequency in Test_Setup.xlsx according to user's input
+        sheet = self.book["ACP"]
+        sheet.cell(row = 1, column = 2, value = freq)
+        self.book.save("Test_Setup.xlsx")
 
-        # following code is to initialize FSV to complete the test
-        self.Centre_frequency = self.sheet["B1"].value # get all parameters from Test_Setup.xlsx
-        self.Span_frequency = self.sheet["B2"].value #
-        self.RBW = self.sheet["B3"].value #
-        self.VBW = self.sheet["B4"].value #
-        self.RF_level = self.sheet["B5"].value #
-        self.Attenuation = self.sheet["B6"].value #
-        self.RefLev_offset = self.sheet["B7"].value#
-        self.Trace_RMS = self.sheet["B8"].value #
+        Centre_frequency = sheet["B1"].value # get all parameters from Test_Setup.xlsx
+        Span_frequency = sheet["B2"].value
+        RBW = sheet["B3"].value
+        VBW = sheet["B4"].value
+        RF_level = sheet["B5"].value
+        Attenuation = sheet["B6"].value
+        RefLev_offset = sheet["B7"].value
+        Trace_RMS = sheet["B8"].value
+        Tx_CHBW = sheet["B10"].value
+        AJ_CHBW = sheet["B11"].value
+        AT_CHBW = sheet["B12"].value
+        AJ_CHNUM = sheet["B13"].value
+        AJ_SPACE = sheet["B14"].value
+        AT_SPACE = sheet["B15"].value
+        Power_Mode = sheet["B16"].value
+        Ave_number = sheet["B17"].value
 
-        self.Tx_CHBW = self.sheet["B10"].value
-        self.AJ_CHBW = self.sheet["B11"].value
-        self.AT_CHBW = self.sheet["B12"].value
-        self.AJ_CHNUM = self.sheet["B13"].value
-        self.AJ_SPACE = self.sheet["B14"].value
-        self.AT_SPACE = self.sheet["B15"].value
-        self.Power_Mode = self.sheet["B16"].value
-        self.Ave_number = self.sheet["B17"].value
-
-        self.SP.write(f"*RST")
+        self.SP.write(f"*RST") # write all paramaters to SpecAn
         self.SP.write("SYST:DISP:UPD ON")
         self.SP.write("CALC:MARK:FUNC:POW:SEL ACP")
-
-        self.SP.write(f"FREQ:CENT {self.Centre_frequency}MHz") # set all parameters
-        self.SP.write(f"FREQ:SPAN {self.Span_frequency}kHz")
-        self.SP.write(f"BAND {self.RBW}Hz")
-        self.SP.write(f"BAND:VID {self.VBW}Hz")
-        self.SP.write(f"DISP:TRAC:Y:RLEV:OFFS {self.RefLev_offset}")
-        self.SP.write(f"DISP:TRAC:Y:RLEV {self.RF_level}")
-        self.SP.write(f"INP:ATT {self.Attenuation}")
-        self.SP.write(f"{self.Trace_RMS}")
-
-        self.SP.write(f"POW:ACH:BWID:CHAN1 {self.Tx_CHBW}kHz")
-        self.SP.write(f"POW:ACH:BWID:ACH {self.AJ_CHBW}kHz")
-        self.SP.write(f"POW:ACH:BWID:ALT1 {self.AT_CHBW}kHz")
-        self.SP.write(f"POW:ACH:ACP {self.AJ_CHNUM}")
-        self.SP.write(f"POW:ACH:SPAC {self.AJ_SPACE}kHz")
-        self.SP.write(f"POW:ACH:SPAC:ALT1 {self.AT_SPACE}kHz")
-        self.SP.write(f"POW:ACH:MODE {self.Power_Mode}")
-        self.SP.write(f"SWE:COUN {self.Ave_number}")
+        self.SP.write(f"FREQ:CENT {Centre_frequency}MHz")
+        self.SP.write(f"FREQ:SPAN {Span_frequency}kHz")
+        self.SP.write(f"BAND {RBW}Hz")
+        self.SP.write(f"BAND:VID {VBW}Hz")
+        self.SP.write(f"DISP:TRAC:Y:RLEV:OFFS {RefLev_offset}")
+        self.SP.write(f"DISP:TRAC:Y:RLEV {RF_level}")
+        self.SP.write(f"INP:ATT {Attenuation}")
+        self.SP.write(f"{Trace_RMS}")
+        self.SP.write(f"POW:ACH:BWID:CHAN1 {Tx_CHBW}kHz")
+        self.SP.write(f"POW:ACH:BWID:ACH {AJ_CHBW}kHz")
+        self.SP.write(f"POW:ACH:BWID:ALT1 {AT_CHBW}kHz")
+        self.SP.write(f"POW:ACH:ACP {AJ_CHNUM}")
+        self.SP.write(f"POW:ACH:SPAC {AJ_SPACE}kHz")
+        self.SP.write(f"POW:ACH:SPAC:ALT1 {AT_SPACE}kHz")
+        self.SP.write(f"POW:ACH:MODE {Power_Mode}")
+        self.SP.write(f"SWE:COUN {Ave_number}")
         self.SP.write(f"CALC:MARK:FUNC:POW:MODE WRIT")
         self.SP.write(f"DISP:TRAC:MODE AVER")
 
 
     def CSE_Setup(self, sub_range, limit_line):
-
-        if sub_range == 1:
-            self.sheet = self.book["Cond_Spurious_1"]
+        if sub_range == 1:# choose sub_range
+            sheet = self.book["Cond_Spurious_1"]
         elif sub_range == 2:
-            self.sheet = self.book["Cond_Spurious_2"]
+            sheet = self.book["Cond_Spurious_2"]
         elif sub_range == 3:
-            self.sheet = self.book["Cond_Spurious_3"]
+            sheet = self.book["Cond_Spurious_3"]
         elif sub_range == 4:
-            self.sheet = self.book["Cond_Spurious_4"]
+            sheet = self.book["Cond_Spurious_4"]
         elif sub_range == 5:
-                self.sheet = self.book["Cond_Spurious_5"]
+            sheet = self.book["Cond_Spurious_5"]
         else:
             raise ValueError('sub_range only accept integer 1 or 5')
 
-
         if limit_line == 2:
-            self.sheet.cell(row = 16, column = 2, value = "ON") # write test frequency in this sheet
-            self.sheet.cell(row = 18, column = 2, value = "OFF") # write test frequency in this sheet
+            sheet.cell(row = 16, column = 2, value = "ON") # choose limit line
+            sheet.cell(row = 18, column = 2, value = "OFF")
             self.book.save("Test_Setup.xlsx")
         elif limit_line == 3:
-            self.sheet.cell(row = 16, column = 2, value = "OFF") # write test frequency in this sheet
-            self.sheet.cell(row = 18, column = 2, value = "ON") # write test frequency in this sheet
+            sheet.cell(row = 16, column = 2, value = "OFF") # choose limit line
+            sheet.cell(row = 18, column = 2, value = "ON")
             self.book.save("Test_Setup.xlsx")
         else:
             raise ValueError('limit_line only accept integer 2 or 3')
 
-        self.start_frequency = self.sheet["B1"].value # get start frequency value from sheet
-        self.stop_frequency = self.sheet["B2"].value # get stop frequency value from sheet
-        self.RBW = self.sheet["B3"].value # get RBW value from sheet
-        self.VBW = self.sheet["B4"].value # get VBW value from sheet
-        self.RF_level = self.sheet["B5"].value # get RF_level
-        self.Attenuation = self.sheet["B6"].value # get attenuation
-        self.RefLev_offset = self.sheet["B7"].value# get RFlevel offset
-        self.Trace_peak = self.sheet["B8"].value # get trace to Pos peak
-        self.Transducer1 = self.sheet["B9"].value # cable
-        self.Trans1_ON = self.sheet["B10"].value
-        self.Transducer2 = self.sheet["B11"].value # 30dB attenuator
-        self.Trans2_ON = self.sheet["B12"].value
-        self.Transducer3 = self.sheet["B13"].value # High pass filter
-        self.Trans3_ON = self.sheet["B14"].value
-        self.Limit_line_1 = self.sheet["B15"].value # ASNZS4365:2011
-        self.Limit_line_1_ON = self.sheet["B16"].value # ASNZS4365:2011
-        self.Limit_line_2 = self.sheet["B17"].value # ASNZS4365:2011
-        self.Limit_line_2_ON = self.sheet["B18"].value # ASNZS4365:2011
-        self.Sweep_points= self.sheet["B19"].value # get sweep points
+        start_frequency = sheet["B1"].value # get all parameters from Test_Setup.xlsx
+        stop_frequency = sheet["B2"].value
+        RBW = sheet["B3"].value
+        VBW = sheet["B4"].value
+        RF_level = sheet["B5"].value
+        Attenuation = sheet["B6"].value
+        RefLev_offset = sheet["B7"].value
+        Trace_peak = sheet["B8"].value
+        Transducer1 = sheet["B9"].value
+        Trans1_ON = sheet["B10"].value
+        Transducer2 = sheet["B11"].value
+        Trans2_ON = sheet["B12"].value
+        Transducer3 = sheet["B13"].value
+        Trans3_ON = sheet["B14"].value
+        Limit_line_1 = sheet["B15"].value
+        Limit_line_1_ON = sheet["B16"].value
+        Limit_line_2 = sheet["B17"].value
+        Limit_line_2_ON = sheet["B18"].value
+        Sweep_points= sheet["B19"].value
 
-
-        self.SP.write(f"*RST")
+        self.SP.write(f"*RST") # write all paramaters to SpecAn
         self.SP.write("SYST:DISP:UPD ON")
-        self.SP.write(f"FREQ:STAR {self.start_frequency}MHz")
-        self.SP.write(f"FREQ:STOP {self.stop_frequency}MHz")
-        self.SP.write(f"BAND {self.RBW}kHz")
-        self.SP.write(f"BAND:VID {self.VBW}kHz")
-        self.SP.write(f"DISP:TRAC:Y:RLEV:OFFS {self.RefLev_offset}")
-        self.SP.write(f"DISP:TRAC:Y:RLEV {self.RF_level}")
-        self.SP.write(f"INP:ATT {self.Attenuation}")
-        self.SP.write(f"{self.RefLev_offset}")
-        self.SP.write(f"{self.Trace_peak}")
-        self.SP.write(f"CORR:TRAN:SEL '{self.Transducer1}'")
-        self.SP.write(f"CORR:TRAN {self.Trans1_ON} ")
-        self.SP.write(f"CORR:TRAN:SEL '{self.Transducer2}'")
-        self.SP.write(f"CORR:TRAN {self.Trans2_ON}")
-        self.SP.write(f"CORR:TRAN:SEL '{self.Transducer3}'")
-        self.SP.write(f"CORR:TRAN {self.Trans3_ON}")
-        self.SP.write(f"CALC:LIM:NAME '{self.Limit_line_1}'")
-        self.SP.write(f"CALC:LIM:UPP:STAT {self.Limit_line_1_ON}")
-        self.SP.write(f"CALC:LIM:NAME '{self.Limit_line_2}'")
-        self.SP.write(f"CALC:LIM:UPP:STAT {self.Limit_line_2_ON}")
-        self.SP.write(f"SWE:POIN {self.Sweep_points}")
+        self.SP.write(f"FREQ:STAR {start_frequency}MHz")
+        self.SP.write(f"FREQ:STOP {stop_frequency}MHz")
+        self.SP.write(f"BAND {RBW}kHz")
+        self.SP.write(f"BAND:VID {VBW}kHz")
+        self.SP.write(f"DISP:TRAC:Y:RLEV:OFFS {RefLev_offset}")
+        self.SP.write(f"DISP:TRAC:Y:RLEV {RF_level}")
+        self.SP.write(f"INP:ATT {Attenuation}")
+        self.SP.write(f"{RefLev_offset}")
+        self.SP.write(f"{Trace_peak}")
+        self.SP.write(f"CORR:TRAN:SEL '{Transducer1}'")
+        self.SP.write(f"CORR:TRAN {Trans1_ON} ")
+        self.SP.write(f"CORR:TRAN:SEL '{Transducer2}'")
+        self.SP.write(f"CORR:TRAN {Trans2_ON}")
+        self.SP.write(f"CORR:TRAN:SEL '{Transducer3}'")
+        self.SP.write(f"CORR:TRAN {Trans3_ON}")
+        self.SP.write(f"CALC:LIM:NAME '{Limit_line_1}'")
+        self.SP.write(f"CALC:LIM:UPP:STAT {Limit_line_1_ON}")
+        self.SP.write(f"CALC:LIM:NAME '{Limit_line_2}'")
+        self.SP.write(f"CALC:LIM:UPP:STAT {Limit_line_2_ON}")
+        self.SP.write(f"SWE:POIN {Sweep_points}")
         self.SP.write(f"DISP:TRAC:MODE MAXH")
 
     def TranP_Setup(self, freq):
-        self.sheet = self.book["Tran_Perform"]
-        # below codes are for setting test frequency in Test_Setup.xlsx according to user's input
-        self.sheet.cell(row = 1, column = 2, value = freq) # write test frequency in this self.sheet
-        self.book.save("Test_Setup.xlsx") # save existing .xlsx file
-        # above codes are for setting test frequency in Test_Setup.xlsx according to user's input
+        sheet = self.book["Tran_Perform"]
+        sheet.cell(row = 1, column = 2, value = freq)
+        self.book.save("Test_Setup.xlsx")
 
-        # following code is to initialize FSV
-        self.Centre_frequency = self.sheet["B1"].value #
-        self.Dev_PerDivision = self.sheet["B2"].value #
-        self.Demod_BW = self.sheet["B3"].value #
-        self.AF_Couple = self.sheet["B4"].value #
-        self.RF_level = self.sheet["B5"].value #
-        self.Attenuation = self.sheet["B6"].value # get attenuation
-        self.RefLev_offset = self.sheet["B7"].value# get RFlevel offset
-        self.Trace_Peak = self.sheet["B8"].value # get trace to Pos peak
-        self.Demod_MT = self.sheet["B9"].value #
-        self.Cont_sweep = self.sheet["B10"].value #
-        self.Trigger_offset = self.sheet["B11"].value
+        Centre_frequency = sheet["B1"].value # get all parameters from Test_Setup.xlsx
+        Dev_PerDivision = sheet["B2"].value
+        Demod_BW = sheet["B3"].value
+        AF_Couple = sheet["B4"].value
+        RF_level = sheet["B5"].value
+        Attenuation = sheet["B6"].value
+        RefLev_offset = sheet["B7"].value
+        Trace_Peak = sheet["B8"].value
+        Demod_MT = sheet["B9"].value
+        Cont_sweep = sheet["B10"].value
+        Trigger_offset = sheet["B11"].value
 
-        self.SP.write(f"*RST")
+        self.SP.write(f"*RST") # write all paramaters to SpecAn
         self.SP.write("SYST:DISP:UPD ON")
         self.SP.write("ADEM ON")
-        self.SP.write(f"FREQ:CENT {self.Centre_frequency}MHz")
-        self.SP.write(f"DISP:TRAC:Y:PDIV {self.Dev_PerDivision}kHz")
-        self.SP.write(f"BAND:DEM {self.Demod_BW}kHz")
-        self.SP.write(f"ADEM:AF:COUP {self.AF_Couple}")#Set AF coupling to AC, the frequency offset is automatically corrected.
-        # i.e. the trace is always symmetric with respect to the zero line
-        self.SP.write(f"DISP:TRAC:Y:RLEV:OFFS {self.RefLev_offset}")
-        self.SP.write(f"DISP:TRAC:Y:RLEV {self.RF_level}")
-        self.SP.write(f"INP:ATT {self.Attenuation}")
-        self.SP.write(f"{self.Trace_Peak}")
-        self.SP.write(f"ADEM:MTIM {self.Demod_MT}ms")
-        self.SP.write(f"INIT:CONT {self.Cont_sweep}")
-        self.SP.write(f"TRIG:HOLD {self.Trigger_offset}")
-
-        # above code is to initialize FSV
-
-
-
-
-    def get_centfreq(self):
-        return self.Centre_frequency # useful for ACP test
-
+        self.SP.write(f"FREQ:CENT {Centre_frequency}MHz")
+        self.SP.write(f"DISP:TRAC:Y:PDIV {Dev_PerDivision}kHz")
+        self.SP.write(f"BAND:DEM {Demod_BW}kHz")
+        self.SP.write(f"ADEM:AF:COUP {AF_Couple}")
+        self.SP.write(f"DISP:TRAC:Y:RLEV:OFFS {RefLev_offset}")
+        self.SP.write(f"DISP:TRAC:Y:RLEV {RF_level}")
+        self.SP.write(f"INP:ATT {Attenuation}")
+        self.SP.write(f"{Trace_Peak}")
+        self.SP.write(f"ADEM:MTIM {Demod_MT}ms")
+        self.SP.write(f"INIT:CONT {Cont_sweep}")
+        self.SP.write(f"TRIG:HOLD {Trigger_offset}")
 
     def write(self, str):
         self.SP.write(str)
@@ -368,35 +338,33 @@ class SpecAn(object):
     def query(self, str):
         return self.SP.query(str)
 
-
     def get_FEP_result(self):
         self.SP.write("CALC:MARK1:MAX")
-        self.Frequency = self.SP.query("CALC:MARK1:X?")
-        self.Level = float(self.SP.query("CALC:MARK1:Y?"))
-        self.Frequency_error = float(self.Frequency) - float(self.Centre_frequency)*1e6
-        self.indication = (self.SP.query("*OPC?")).replace("1","Completed.")
-
-        return {'F':self.Frequency_error, 'P':self.Level, 'I':self.indication}
+        Frequency = self.SP.query("CALC:MARK1:X?")
+        Level = float(self.SP.query("CALC:MARK1:Y?"))
+        Frequency_error = float(Frequency) - float(self.SP.query("FREQ:CENT?"))*1e6
+        indication = (self.SP.query("*OPC?")).replace("1","Completed.")
+        return {'F':Frequency_error, 'P':Level, 'I':indication}
 
     def get_CSE_result(self):
         self.SP.write("CALC:MARK1:MAX")
-        self.Frequency = float(self.SP.query("CALC:MARK1:X?"))/1e6
-        self.Level = float(self.SP.query("CALC:MARK1:Y?"))
-        self.indication = (self.SP.query("*OPC?")).replace("1","Completed.")
-        return {'F':self.Frequency, 'P':self.Level, 'I':self.indication}
+        Frequency = float(self.SP.query("CALC:MARK1:X?"))/1e6
+        Level = float(self.SP.query("CALC:MARK1:Y?"))
+        indication = (self.SP.query("*OPC?")).replace("1","Completed.")
+        return {'F':Frequency, 'P':Level, 'I':indication}
 
     def screenshot(self, file_name):
-        self.SP.write("HCOP:DEV:LANG PNG")
+        self.SP.write("HCOP:DEV:LANG PNG") # set file type to .png
         self.SP.write("HCOP:CMAP:DEF4")
         self.SP.write(f"MMEM:NAME \'c:\\temp\\Dev_Screenshot.png\'")
-        self.SP.write("HCOP:IMM")
+        self.SP.write("HCOP:IMM") # perform copy and save .png file on SpecAn
         self.SP.query("*OPC?")
 
-        file_data = self.SP.query_binary_values(f"MMEM:DATA? \'c:\\temp\\Dev_Screenshot.png\'", datatype='s',)[0]
+        file_data = self.SP.query_binary_values(f"MMEM:DATA? \'c:\\temp\\Dev_Screenshot.png\'", datatype='s',)[0] # query binary data and save
         new_file = open(f"c:\\Temp\\{file_name}.png", "wb")# extract file_name string using (f"{}")
-        new_file.write(file_data)
+        new_file.write(file_data) # copy data to the file on PC
         new_file.close()
-        print(f"saved to PC c:\\Temp\\{file_name}.png\n") # extract file_name string using (f"{}")
+        print(f"saved to PC c:\\Temp\\{file_name}.png\n")
 
     def close(self):
         self.SP.close()
@@ -738,10 +706,10 @@ def Tx_Adjacent_channel_power():
     Result_sheet.get_sheet("ACP")
     SML.Tx_Setup()
     SML.query('*OPC?')
-    FSV.DeMod_Setup(470)
+    FSV.DeMod_Setup(460)
     FSV.query('*OPC?')
 
-    CP50.Set_Freq(470)
+    CP50.Set_Freq(460)
     CP50.Set_Pow("high")
     CP50.Radio_On()
     time.sleep(2)
@@ -776,7 +744,7 @@ def Tx_Adjacent_channel_power():
     FSV.write(f"INIT:CONT ON")
     FSV.query('*OPC?')
 
-    FSV.ACP_Setup(470)
+    FSV.ACP_Setup(460)
     time.sleep(8)
     FSV.write(f"DISP:TRAC:MODE VIEW")
 
@@ -784,7 +752,7 @@ def Tx_Adjacent_channel_power():
     ACP = FSV.query("CALC:MARK:FUNC:POW:RES? ACP")
     print(ACP)
     LIST = re.findall(r'\d+\.\d+', ACP)
-    Result_sheet.write(row = 2, column = 1, value = FSV.get_centfreq())
+    Result_sheet.write(row = 2, column = 1, value = FSV.query("FREQ:CENT?"))
     Result_sheet.write(row = 2, column = 2, value = float(LIST[0]))
     Result_sheet.write(row = 2, column = 3, value = -float(LIST[1]))
     Result_sheet.write(row = 2, column = 4, value = -float(LIST[2]))
@@ -795,9 +763,6 @@ def Tx_Adjacent_channel_power():
     indication = (FSV.query("*OPC?")).replace("1","Completed.")
     print(f"ACP test {indication}")
 
-    # FSV.close()
-    # SML.close()
-    # CP50.Radio_close()
 
 def Tx_Conducted_spurious_emissions():
     while True:
@@ -991,7 +956,6 @@ def CHSW_SR():
     Start_F = Decimal(479.9875)/Decimal(1) # Decimal module make sure float numbers addition yeilds correct value
     CP50_Result.get_sheet("day2")
 
-
     for i in range(9, 11):
         Spur_Res = Rx_Spurious_response_immunity(freq=Start_F, delta=Decimal(-2*38.85))
         CP50_Result.write(row = i+2, column = 1, value = Start_F)
@@ -1003,16 +967,11 @@ def CHSW_SR():
         Start_F += Decimal(0.0125) # frequency in MHz
 
 
-
-
-
 try:
     SC = SoundCard()
 except BaseException:
-    print("FSV is not on.")
+    print("Specified Soundcard does not exist.")
     pass
-
-SC.live_plots()
 
 try:
     FSV = SpecAn('TCPIP0::192.168.10.9::hislip0::INSTR')
@@ -1023,6 +982,7 @@ except BaseException:
 try:
     CP50 = Radio('com7')
 except BaseException:
+    print("Specified com port does not exsit.")
     pass
 
 try:
@@ -1043,7 +1003,16 @@ except BaseException:
     print("CMS is not on.")
     pass
 
-Result_sheet = Excel("Test_Result.xlsx")
-CP50_Result = Excel("CP50_Result.xlsx")
+try:
+    Result_sheet = Excel("Test_Result.xlsx")
+    CP50_Result = Excel("CP50_Result.xlsx")
+except BaseException:
+    print("Specified Excel file does not exsit.")
+    pass
+
+#SC.live_plots()
+#Tx_Adjacent_channel_power()
+#Tx_Frequency_error_Carrier_power()
+#Tx_Conducted_spurious_emissions()
 
 getcontext().prec = 10 # set 10 decimal values precision
