@@ -14,10 +14,12 @@ import re
 import config
 import datetime
 from decimal import * # should aviod wildcard import mentioned in PEP08
+getcontext().prec = 10 # set 10 decimal values precision
 import sounddevice as sd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fftpack import fft
+
 
 
 
@@ -430,52 +432,52 @@ class SigGen(object):
         self.SG.write(f":OUTP1 {self.RF_power_on}")
 
     def Unwanted_Signal(self, freq):
-        self.sheet = self.book["Rx_Siggen_Setting"]
+        sheet = self.book["Rx_Siggen_Setting"]
         # below codes are for setting test frequency in Test_Setup.xlsx according to user's input
-        self.sheet.cell(row = 8, column = 3, value = freq) # write test frequency in this self.sheet
+        sheet.cell(row = 8, column = 3, value = freq) # write test frequency in this self.sheet
         self.book.save("Test_Setup.xlsx") # save existing .xlsx file
         # above codes are for setting test frequency in Test_Setup.xlsx according to user's input
 
-        self.Frequency_RF = self.sheet["C8"].value #
-        self.Level_RF = self.sheet["C9"].value #
-        self.Frequency_AF = self.sheet["C10"].value #
-        self.Deviation = self.sheet["C11"].value #
-        self.Mod_state = self.sheet["C12"].value #
-        self.RF_power_on = self.sheet["C13"].value #
+        Frequency_RF = sheet["C8"].value #
+        self.Level_RF = sheet["C9"].value #
+        Frequency_AF = sheet["C10"].value #
+        Deviation = sheet["C11"].value #
+        Mod_state = sheet["C12"].value #
+        RF_power_on = sheet["C13"].value #
 
         self.SG.write(f"*RST")
         self.SG.write("SYST:DISP:UPD ON")
-        self.SG.write(f"FREQ {self.Frequency_RF}MHz")
+        self.SG.write(f"FREQ {Frequency_RF}MHz")
         self.SG.write(f":POW:UNIT dBuV")
         self.SG.write(f":POW {self.Level_RF}dBuV")
-        self.SG.write(f":FM:INT:FREQ {self.Frequency_AF}kHz")
-        self.SG.write(f":FM:DEV {self.Deviation}kHz")
-        self.SG.write(f":FM:STAT {self.Mod_state}")
-        self.SG.write(f":OUTP1 {self.RF_power_on}")
+        self.SG.write(f":FM:INT:FREQ {Frequency_AF}kHz")
+        self.SG.write(f":FM:DEV {Deviation}kHz")
+        self.SG.write(f":FM:STAT {Mod_state}")
+        self.SG.write(f":OUTP1 {RF_power_on}")
 
     def Wanted_Signal(self, freq):
-        self.sheet = self.book["Rx_Siggen_Setting"]
+        sheet = self.book["Rx_Siggen_Setting"]
         # below codes are for setting test frequency in Test_Setup.xlsx according to user's input
-        self.sheet.cell(row = 1, column = 3, value = freq) # write test frequency in this self.sheet
+        sheet.cell(row = 1, column = 3, value = freq) # write test frequency in this self.sheet
         self.book.save("Test_Setup.xlsx") # save existing .xlsx file
         # above codes are for setting test frequency in Test_Setup.xlsx according to user's input
 
-        self.Frequency_RF = self.sheet["C1"].value #
-        self.Level_RF = self.sheet["C2"].value #
-        self.Frequency_AF = self.sheet["C3"].value #
-        self.Deviation = self.sheet["C4"].value #
-        self.Mod_state = self.sheet["C5"].value #
-        self.RF_power_on = self.sheet["C6"].value #
+        Frequency_RF = sheet["C1"].value #
+        self.Level_RF = sheet["C2"].value #
+        Frequency_AF = sheet["C3"].value #
+        Deviation = sheet["C4"].value #
+        Mod_state = sheet["C5"].value #
+        RF_power_on = sheet["C6"].value #
 
         self.SG.write(f"*RST")
         self.SG.write("SYST:DISP:UPD ON")
-        self.SG.write(f"FREQ {self.Frequency_RF}MHz")
+        self.SG.write(f"FREQ {Frequency_RF}MHz")
         self.SG.write(f":POW:UNIT dBuV")
         self.SG.write(f":POW {self.Level_RF}dBuV")
-        self.SG.write(f":FM:INT:FREQ {self.Frequency_AF}kHz")
-        self.SG.write(f":FM:DEV {self.Deviation}kHz")
-        self.SG.write(f":FM:STAT {self.Mod_state}")
-        self.SG.write(f":OUTP1 {self.RF_power_on}")
+        self.SG.write(f":FM:INT:FREQ {Frequency_AF}kHz")
+        self.SG.write(f":FM:DEV {Deviation}kHz")
+        self.SG.write(f":FM:STAT {Mod_state}")
+        self.SG.write(f":OUTP1 {RF_power_on}")
 
 
     def Set_Timeout(self, ms):
@@ -865,7 +867,7 @@ def Rx_Adjacent_channel_selectivity(freq, delta):# delta set frequency offset
     SINAD_data_str = CMS.query("SINAD:R?")
     SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
     print(SINAD_data_num)
-    Level_RF = SMB.Lev_RF()
+    Level_RF = SMB.query("")
 
     for i in range(0,100):
         if float(SINAD_data_num) > 14.0:
@@ -967,6 +969,72 @@ def CHSW_SR():
         Start_F += Decimal(0.0125) # frequency in MHz
 
 
+def Rx_Intermodulation_Response(freq, delta1, delta2):# delta set frequency offset
+    Result_sheet.get_sheet("Intermodulation_Response")
+    SML.Wanted_Signal(freq=freq)
+    SML.query('*OPC?')
+    SMB.Unwanted_Signal(freq=freq+Decimal(delta1))
+    SMC.Unwanted_Signal(freq=freq+Decimal(delta2))
+    SMC.write(f":FM:STAT OFF")# turn off modulation for SMC
+    print(f"Inference frequency1 has been set to {freq+Decimal(delta1)}MHz")
+    print(f"Inference frequency2 has been set to {freq+Decimal(delta2)}MHz")
+    SMB.query('*OPC?')
+    SMC.query('*OPC?')
+    CP50.Set_Freq(freq=freq)
+    CMS.Set_Timeout(ms=10000)
+
+    # read initial SINAD
+    SINAD_data_str = CMS.query("SINAD:R?")
+    SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
+    print(SINAD_data_num)
+    Level_RF = SMB.Lev_RF()
+
+    for i in range(0,100):
+        if float(SINAD_data_num) > 14.0:
+            Result_sheet.write(row = i+2, column = 1, value = Level_RF)
+            Result_sheet.write(row = i+2, column = 2, value = SINAD_data_num)
+            Level_RF = Level_RF + 1
+            SMB.write(f":POW {Level_RF}dBuV")
+            SMC.write(f":POW {Level_RF}dBuV")
+            SMB.query('*OPC?')
+            SMC.query('*OPC?')
+            SINAD_data_str = CMS.query("SINAD:R?")
+            SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
+            if SINAD_data_num != '0':
+                SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
+                print(SINAD_data_num)
+            else:
+                break
+        else:
+            break
+
+    Inter_Res = Level_RF-33.5
+    Result_sheet.write(row = 2, column = 10, value = Inter_Res)
+    Result_sheet.save("Test_Result.xlsx")
+    return Inter_Res
+
+def CHSW_Intermodulation():
+    Start_F = Decimal(487)/Decimal(1) # Decimal module make sure float numbers addition yeilds correct value
+    CP50_Result.get_sheet("Intermodulation_Response")
+
+    for i in range(14, 19):
+        Inter_Res_low = Rx_Intermodulation_Response(freq=Start_F, delta1=0.05, delta2=0.025)
+        CP50_Result.write(row = i+2, column = 1, value = Start_F)
+        CP50_Result.write(row = i+2, column = 2, value = Start_F+Decimal(0.05))
+        CP50_Result.write(row = i+2, column = 3, value = Start_F+Decimal(0.025))
+        CP50_Result.write(row = i+2, column = 4, value = Inter_Res_low)
+
+        Inter_Res_high = Rx_Intermodulation_Response(freq=Start_F, delta1=0.1, delta2=0.05)
+        CP50_Result.write(row = i+2, column = 5, value = Start_F+Decimal(0.1))
+        CP50_Result.write(row = i+2, column = 6, value = Start_F+De/cimal(0.05))
+        CP50_Result.write(row = i+2, column = 7, value = Inter_Res_high)
+        Timestamp ='{:%d-%b-%Y %H:%M:%S}'.format(datetime.datetime.now())
+        CP50_Result.write(row = i+2, column = 8, value = Timestamp)
+
+        CP50_Result.save("CP50_Result.xlsx")
+        Start_F += Decimal(0.0125) # frequency in MHz
+
+
 try:
     SC = SoundCard()
 except BaseException:
@@ -986,7 +1054,7 @@ except BaseException:
     pass
 
 try:
-    SML = SigGen('ASRL4::INSTR')
+    SML = SigGen('GPIB0::29::INSTR')
 except BaseException:
     print("SML is not on.")
     pass
@@ -995,6 +1063,12 @@ try:
     SMB = SigGen('USB0::0x0AAD::0x0054::106409::INSTR')
 except BaseException:
     print("SMB is not on.")
+    pass
+
+try:
+    SMC = SigGen('GPIB0::28::INSTR')
+except BaseException:
+    print("SMC is not on.")
     pass
 
 try:
@@ -1014,5 +1088,4 @@ except BaseException:
 #Tx_Adjacent_channel_power()
 #Tx_Frequency_error_Carrier_power()
 #Tx_Conducted_spurious_emissions()
-
-getcontext().prec = 10 # set 10 decimal values precision
+#CHSW_Intermodulation()
