@@ -14,22 +14,19 @@ import re
 import config
 import datetime
 from decimal import * # should aviod wildcard import mentioned in PEP08
-getcontext().prec = 10 # set 10 decimal values precision
+# Decimal module import from decimal make sure float numbers addition yeilds correct value
 import sounddevice as sd
 import numpy as np
 import matplotlib.pyplot as plt
 from scipy.fftpack import fft
 
-
-
-
-# below codes are for importing files from different directory
+# below code block are for importing files from different directory
 # a __init__.py file has to be exist in both "import from" and "import to" folder
 sys.path.insert(0, r'C:\Users\afan\kallithea\aaron test\midlevel')
 sys.path.insert(0, r'C:\Users\afan\kallithea\aaron test\bottomlevel')
 sys.path.insert(0, r'C:\Users\afan\kallithea\aaron test\toplevel')
-# above codes are for importing files from different directory
-# a __init__.py file has to be exist in both "import from" and "import to" folder
+getcontext().prec = 10 # set 10 decimal values precision
+
 
 class SoundCard(object):
     def __init__(self):
@@ -56,7 +53,7 @@ class SoundCard(object):
         X_m = (2/n)*abs(X[0:np.size(fr)])
         return {'Time_level':x4, 'Time':t, 'Freq_level':X_m, 'Freq':fr}
 
-    def get_SINAD(self, dict):
+    def get_SINAD(self, dict): # accept returned dictionary from get_sample()
         X_mmax = np.max(dict['Freq_level']) # find maximum value in numpy array
         fr_index = np.where(dict['Freq_level'] == X_mmax) # locate index in numpy array
         fr_max = dict['Freq'][fr_index] # find corresponding frequency of maximum value
@@ -64,7 +61,7 @@ class SoundCard(object):
         mask = np.full(np.size(dict['Freq']), 1) # initialize a mask numpy array with size=fr, value=1
 
         mask[fr_index[0]]=0 # make notch filter mask by assigning some points=0 where certain bandwidth of carrier was covered
-        for i in range(1,41): # notch filter cover 40 bins
+        for i in range(1,41): # notch filter cover 80 bins
             mask[fr_index[0]-i]=0
             mask[fr_index[0]+i]=0
 
@@ -99,6 +96,7 @@ class SoundCard(object):
 
             plt.pause(0.01)# this command will call plt.show()
 
+
 class SpecAn(object):
     def __init__(self, address):
         self.rm = visa.ResourceManager()
@@ -130,7 +128,7 @@ class SpecAn(object):
         Limit_line_1_ON = sheet["B16"].value # ASNZS4365:2011
         Limit_line_2 = sheet["B17"].value # ASNZS4295:2015
         Limit_line_2_ON = sheet["B18"].value # ASNZS4295:2015
-        Sweep_points= sheet["B19"].value # get sweep points
+        Sweep_points= sheet["B19"].value
 
         self.SP.write(f"*RST") # write all paramaters to SpecAn
         self.SP.write("SYST:DISP:UPD ON")
@@ -155,7 +153,6 @@ class SpecAn(object):
         self.SP.write(f"CALC:LIM:UPP:STAT {Limit_line_2_ON}")
         self.SP.write(f"SWE:POIN {Sweep_points}")
 
-
     def DeMod_Setup(self, freq):
         sheet = self.book["Analog_Demod"]
         sheet.cell(row = 1, column = 2, value = freq)
@@ -178,7 +175,8 @@ class SpecAn(object):
         self.SP.write(f"FREQ:CENT {Centre_frequency}MHz")
         self.SP.write(f"DISP:TRAC:Y:PDIV {Dev_PerDivision}kHz")
         self.SP.write(f"BAND:DEM {Demod_BW}kHz")
-        self.SP.write(f"ADEM:AF:COUP {AF_Couple}")#Set AF coupling to AC, the frequency offset is automatically corrected.
+        self.SP.write(f"ADEM:AF:COUP {AF_Couple}")
+        #Set AF coupling to AC, the frequency offset is automatically corrected.
         # i.e. the trace is always symmetric with respect to the zero line
         self.SP.write(f"DISP:TRAC:Y:RLEV:OFFS {RefLev_offset}")
         self.SP.write(f"DISP:TRAC:Y:RLEV {RF_level}")
@@ -186,7 +184,6 @@ class SpecAn(object):
         self.SP.write(f"{Trace_Peak}")
         self.SP.write(f"ADEM:MTIM {Demod_MT}ms")
         self.SP.write(f"INIT:CONT {Cont_sweep}")
-
 
     def ACP_Setup(self, freq):
         sheet = self.book["ACP"]
@@ -231,7 +228,6 @@ class SpecAn(object):
         self.SP.write(f"SWE:COUN {Ave_number}")
         self.SP.write(f"CALC:MARK:FUNC:POW:MODE WRIT")
         self.SP.write(f"DISP:TRAC:MODE AVER")
-
 
     def CSE_Setup(self, sub_range, limit_line):
         if sub_range == 1:# choose sub_range
@@ -363,7 +359,7 @@ class SpecAn(object):
         self.SP.query("*OPC?")
 
         file_data = self.SP.query_binary_values(f"MMEM:DATA? \'c:\\temp\\Dev_Screenshot.png\'", datatype='s',)[0] # query binary data and save
-        new_file = open(f"c:\\Temp\\{file_name}.png", "wb")# extract file_name string using (f"{}")
+        new_file = open(f"c:\\Temp\\{file_name}.png", "wb")# open a new file as "binary/write" on PC
         new_file.write(file_data) # copy data to the file on PC
         new_file.close()
         print(f"saved to PC c:\\Temp\\{file_name}.png\n")
@@ -378,15 +374,14 @@ class SigGen(object):
         self.SG = self.rm.open_resource(address)
         self.book = load_workbook(filename = "Test_Setup.xlsx") # load an existing .xlsx file
 
-
     def MAD_Setup(self):
         sheet = self.book["Max_Deviation"]
-        # following code is to initialize SML
-        Frequency_AF = sheet["G1"].value #
-        self.Level_AF = sheet["G2"].value #
-        AF_output_on = sheet["G3"].value #
 
-        self.SG.write(f"*RST")
+        Frequency_AF = sheet["G1"].value # get all parameters from Test_Setup.xlsx
+        self.Level_AF = sheet["G2"].value
+        AF_output_on = sheet["G3"].value
+
+        self.SG.write(f"*RST") # write all paramaters to SigGen
         self.SG.write("SYST:DISP:UPD ON")
         self.SG.write(f":FM:INT:FREQ {Frequency_AF}kHz")
         self.SG.write(f":OUTP2:VOLT {self.Level_AF}mV")
@@ -394,34 +389,31 @@ class SigGen(object):
 
     def Tx_Setup(self):
         sheet = self.book["ACP"]
-        # following code is to initialize SML
-        Frequency_AF = sheet["G1"].value #
-        self.Level_AF = sheet["G2"].value #
-        AF_output_on = sheet["G3"].value #
 
-        self.SG.write(f"*RST")
+        Frequency_AF = sheet["G1"].value # get all parameters from Test_Setup.xlsx
+        self.Level_AF = sheet["G2"].value
+        AF_output_on = sheet["G3"].value
+
+        self.SG.write(f"*RST") # write all paramaters to SigGen
         self.SG.write("SYST:DISP:UPD ON")
-        self.SG.write(f":FM:INT:FREQ {self.Frequency_AF}kHz")
+        self.SG.write(f":FM:INT:FREQ {Frequency_AF}kHz")
         self.SG.write(f":OUTP2:VOLT {self.Level_AF}mV")
-        self.SG.write(f":OUTP2 {self.AF_output_on}")
-
+        self.SG.write(f":OUTP2 {AF_output_on}")
 
     def TranP_Setup(self, freq):
         sheet = self.book["Tran_Perform"]
-        # below codes are for setting test frequency in Test_Setup.xlsx according to user's input
-        sheet.cell(row = 1, column = 11, value = freq) # write test frequency in this self.sheet
-        self.book.save("Test_Setup.xlsx") # save existing .xlsx file
-        # above codes are for setting test frequency in Test_Setup.xlsx according to user's input
+        sheet.cell(row = 1, column = 11, value = freq)
+        self.book.save("Test_Setup.xlsx")
 
-        # following code is to initialize SML
-        Frequency_RF = sheet["G1"].value #
-        self.Level_RF = sheet["G2"].value #
-        Frequency_AF = sheet["G3"].value #
-        Deviation = sheet["G4"].value #
-        Mod_state = sheet["G5"].value #
-        RF_power_on = sheet["G6"].value #
 
-        self.SG.write(f"*RST")
+        Frequency_RF = sheet["G1"].value # get all parameters from Test_Setup.xlsx
+        self.Level_RF = sheet["G2"].value
+        Frequency_AF = sheet["G3"].value
+        Deviation = sheet["G4"].value
+        Mod_state = sheet["G5"].value
+        RF_power_on = sheet["G6"].value
+
+        self.SG.write(f"*RST") # write all paramaters to SigGen
         self.SG.write("SYST:DISP:UPD ON")
         self.SG.write(f"FREQ {Frequency_RF}MHz")
         self.SG.write(f":POW:UNIT dBm")
@@ -433,19 +425,17 @@ class SigGen(object):
 
     def Unwanted_Signal(self, freq):
         sheet = self.book["Rx_Siggen_Setting"]
-        # below codes are for setting test frequency in Test_Setup.xlsx according to user's input
-        sheet.cell(row = 8, column = 3, value = freq) # write test frequency in this self.sheet
-        self.book.save("Test_Setup.xlsx") # save existing .xlsx file
-        # above codes are for setting test frequency in Test_Setup.xlsx according to user's input
+        sheet.cell(row = 8, column = 3, value = freq)
+        self.book.save("Test_Setup.xlsx")
 
-        Frequency_RF = sheet["C8"].value #
-        self.Level_RF = sheet["C9"].value #
-        Frequency_AF = sheet["C10"].value #
-        Deviation = sheet["C11"].value #
-        Mod_state = sheet["C12"].value #
-        RF_power_on = sheet["C13"].value #
+        Frequency_RF = sheet["C8"].value # get all parameters from Test_Setup.xlsx
+        self.Level_RF = sheet["C9"].value
+        Frequency_AF = sheet["C10"].value
+        Deviation = sheet["C11"].value
+        Mod_state = sheet["C12"].value
+        RF_power_on = sheet["C13"].value
 
-        self.SG.write(f"*RST")
+        self.SG.write(f"*RST") # write all paramaters to SigGen
         self.SG.write("SYST:DISP:UPD ON")
         self.SG.write(f"FREQ {Frequency_RF}MHz")
         self.SG.write(f":POW:UNIT dBuV")
@@ -457,19 +447,17 @@ class SigGen(object):
 
     def Wanted_Signal(self, freq):
         sheet = self.book["Rx_Siggen_Setting"]
-        # below codes are for setting test frequency in Test_Setup.xlsx according to user's input
-        sheet.cell(row = 1, column = 3, value = freq) # write test frequency in this self.sheet
-        self.book.save("Test_Setup.xlsx") # save existing .xlsx file
-        # above codes are for setting test frequency in Test_Setup.xlsx according to user's input
+        sheet.cell(row = 1, column = 3, value = freq)
+        self.book.save("Test_Setup.xlsx")
 
-        Frequency_RF = sheet["C1"].value #
-        self.Level_RF = sheet["C2"].value #
-        Frequency_AF = sheet["C3"].value #
-        Deviation = sheet["C4"].value #
-        Mod_state = sheet["C5"].value #
-        RF_power_on = sheet["C6"].value #
+        Frequency_RF = sheet["C1"].value # get all parameters from Test_Setup.xlsx
+        self.Level_RF = sheet["C2"].value
+        Frequency_AF = sheet["C3"].value
+        Deviation = sheet["C4"].value
+        Mod_state = sheet["C5"].value
+        RF_power_on = sheet["C6"].value
 
-        self.SG.write(f"*RST")
+        self.SG.write(f"*RST") # write all paramaters to SigGen
         self.SG.write("SYST:DISP:UPD ON")
         self.SG.write(f"FREQ {Frequency_RF}MHz")
         self.SG.write(f":POW:UNIT dBuV")
@@ -479,10 +467,8 @@ class SigGen(object):
         self.SG.write(f":FM:STAT {Mod_state}")
         self.SG.write(f":OUTP1 {RF_power_on}")
 
-
     def Set_Timeout(self, ms):
         self.SG.timeout = ms # useful on CMS for Rx test, pyvisa parameter
-
 
     def Lev_AF(self):
         return self.Level_AF # useful for Max_deviation test
@@ -522,8 +508,7 @@ class Radio(object):
         self.timeout = None
         self.ser = serial.Serial(port=self.port, baudrate=self.baudrate, timeout=self.timeout)  # open serial port
 
-
-    def Packet_Gen(self, payload):
+    def Packet_Gen(self, payload): # return GME2 protocol packet
         # Header
         tx_array = bytearray((self.STX_CHAR, 2, len(payload)))
 
@@ -577,13 +562,6 @@ class Radio(object):
         self.ser.write(self.Packet_Gen(self.payload8))
         print("Radio's off")
 
-
-
-    # def Radio_Control(self):
-    #     # time.sleep(0.5)
-    #     self.ser.write(self.Packet_Gen(payload))
-    #     print("one command sent.") # set a indicator showing one command has been sent to radio
-
     def Radio_close(self):
         self.ser.close()
         print("Serial session is closed.")
@@ -593,21 +571,18 @@ class Excel(object):
         self.file = load_workbook(filename = file_name) # load Test_Result.xlsx
 
     def get_sheet(self, sheet_name):
-        self.sheet = self.file[sheet_name]
+        sheet = self.file[sheet_name]
 
     def write(self, row, column, value):
-        self.sheet.cell(row = row, column = column, value = value)
+        sheet.cell(row = row, column = column, value = value)
 
     def save(self, file_name):
         self.file.save(file_name)
 
 def Tx_Frequency_error_Carrier_power():
-
     Result_sheet.get_sheet("Ferror_Pow")
     FSV.FEP_Setup(470)
     FSV.query('*OPC?')
-
-
     CP50.Set_Freq(470)
     CP50.Set_Pow("high")
     CP50.Radio_On()
@@ -620,17 +595,12 @@ def Tx_Frequency_error_Carrier_power():
     print(f"Frequency error and Carrier power test {dict['I']}")
     print(f"Frequency error:{dict['F']}Hz")
     print(f"Carrier power:{dict['P']}dBm")
-
     Result_sheet.write(row = 2, column = 1, value = dict['F'])
     Result_sheet.write(row = 2, column = 2, value = dict['P'])
     Result_sheet.save("Test_Result.xlsx")
 
-    # FSV.close()
-    # CP50.Radio_close()
-
-
 def Tx_Max_deviation():
-    AF_list = [100, 300, 500, 700, 900, 1000, 1300, 1500, 1700, 1900, 2000, 2300, 2550] # audio frequency list
+    AF_list = [100, 300, 500, 700, 900, 1000, 1300, 1500, 1700, 1900, 2000, 2300, 2550] # audio frequency list in Hz
     Reading_list = [] # empty list for deviation result storage
     # RSheet = Get_result_sheet("Test_Result.xlsx", "Max_Dev")
     Result_sheet.get_sheet("Max_Dev")
@@ -638,19 +608,16 @@ def Tx_Max_deviation():
     SML.query('*OPC?')
     FSV.DeMod_Setup(470)
     FSV.query('*OPC?')
-
     CP50.Set_Freq(470)
     CP50.Set_Pow("high")
     CP50.Radio_On()
     time.sleep(2)
-
     FSV.write(f"INIT:CONT OFF")
-
     Dev_Reading = float(FSV.query("CALC:MARK:FUNC:ADEM:FM? MIDD"))/1000.0 #get the initial deviation value
-
-
     Level_AF = SML.Lev_AF()# initial Level_AF
 
+    # below code block is to find Audio output level
+    # satisfying standard test condtion (around 1.5kHz deviation)
     if Dev_Reading < 1.5:
         while Dev_Reading < 1.47:
             Level_AF = Level_AF+1
@@ -669,16 +636,13 @@ def Tx_Max_deviation():
             FSV.write(f"INIT:CONT OFF")
             time.sleep(1)
             Dev_Reading = float(FSV.query("CALC:MARK:FUNC:ADEM:FM? MIDD"))/1000.0
-    # above code is to find Audio output level satisfying standard condtion (around 1.5kHz deviation)
 
     FSV.write(f"INIT:CONT ON")
     SML.query('*OPC?')
 
-
-    #following code is to vary audio frequency to complete the test
-    Level_AF = 100*Level_AF # bring audio level up 20dB in one step according to standard
+    # below code block is to vary audio frequency to complete the test
+    Level_AF = 100*Level_AF # bring audio level up 20dB in one step
     SML.write(f":OUTP2:VOLT {Level_AF}mV")
-
     for i in range(0,13):
         print(f"At Audio frequency:{AF_list[i]}")
         SML.write(f":FM:INT:FREQ {AF_list[i]}Hz")
@@ -693,16 +657,11 @@ def Tx_Max_deviation():
         Result_sheet.write(row = i+2, column = 1, value = AF_list[i])
         Result_sheet.write(row = i+2, column = 2, value = Dev)
 
-
-    Result_sheet.save("Test_Result.xlsx") # save existing .xlsx file
+    Result_sheet.save("Test_Result.xlsx")
     CP50.Radio_Off()
     SML.write(":OUTP2 OFF")# turn off audio output at the end of the test
     indication = (FSV.query("*OPC?")).replace("1","Completed.")
     print(f"Maximum Deviation test {indication}")
-
-    # FSV.close()
-    # SML.close()
-    # CP50.Radio_close()
 
 def Tx_Adjacent_channel_power():
     Result_sheet.get_sheet("ACP")
@@ -710,19 +669,16 @@ def Tx_Adjacent_channel_power():
     SML.query('*OPC?')
     FSV.DeMod_Setup(460)
     FSV.query('*OPC?')
-
     CP50.Set_Freq(460)
     CP50.Set_Pow("high")
     CP50.Radio_On()
     time.sleep(2)
-
     FSV.write(f"INIT:CONT OFF")
-
     Dev_Reading = float(FSV.query("CALC:MARK:FUNC:ADEM:FM? MIDD"))/1000.0 #get the initial deviation value
 
-
     Level_AF = SML.Lev_AF()# initial Level_AF
-
+# above code is to find Audio output level
+# satisfying standard condtion (around 1.5kHz deviation)
     if Dev_Reading < 1.5:
         while Dev_Reading < 1.47:
             Level_AF = Level_AF+1
@@ -741,16 +697,12 @@ def Tx_Adjacent_channel_power():
             FSV.write(f"INIT:CONT OFF")
             time.sleep(1)
             Dev_Reading = float(FSV.query("CALC:MARK:FUNC:ADEM:FM? MIDD"))/1000.0
-    # above code is to find Audio output level satisfying standard condtion (around 1.5kHz deviation)
 
     FSV.write(f"INIT:CONT ON")
     FSV.query('*OPC?')
-
     FSV.ACP_Setup(460)
     time.sleep(8)
     FSV.write(f"DISP:TRAC:MODE VIEW")
-
-
     ACP = FSV.query("CALC:MARK:FUNC:POW:RES? ACP")
     print(ACP)
     LIST = re.findall(r'\d+\.\d+', ACP)
@@ -758,13 +710,11 @@ def Tx_Adjacent_channel_power():
     Result_sheet.write(row = 2, column = 2, value = float(LIST[0]))
     Result_sheet.write(row = 2, column = 3, value = -float(LIST[1]))
     Result_sheet.write(row = 2, column = 4, value = -float(LIST[2]))
-
     Result_sheet.save("Test_Result.xlsx") # save existing .xlsx file
     CP50.Radio_Off()
     SML.write(":OUTP2 OFF")# turn off audio output at the end of the test
     indication = (FSV.query("*OPC?")).replace("1","Completed.")
     print(f"ACP test {indication}")
-
 
 def Tx_Conducted_spurious_emissions():
     while True:
@@ -792,14 +742,7 @@ def Tx_Conducted_spurious_emissions():
         else:
             print("choice only take number 1, 2 or 3, try agin...")
 
-
-    #FSV.close()
-    #CP50.Radio_close()
-
-
-
 def CSE_operation(row, sub_range):
-
     Result_sheet.get_sheet("Cond_Spur")
     CP50.Set_Freq(470)
     CP50.Set_Pow("high")
@@ -811,29 +754,24 @@ def CSE_operation(row, sub_range):
     print(f"Conducted spurious emission test {dict['I']}")
     print(f"Marker frequency:{dict['F']}MHz")
     print(f"Marker power:{dict['P']}dBm")
-
     Result_sheet.write(row = row, column = 1, value = sub_range)
     Result_sheet.write(row = row, column = 2, value = dict['F'])
     Result_sheet.write(row = row, column = 3, value = dict['P'])
     Result_sheet.write(row = row, column = 4, value = -30)
     Result_sheet.save("Test_Result.xlsx")
 
-
 def Tx_Transient_performance():
-
     SML.TranP_Setup(459.075)
     SML.query('*OPC?')
     FSV.TranP_Setup(459.075)
     FSV.query('*OPC?')
     time.sleep(2)
-
     FSV.write("TRIG:SOUR RFP")
     time.sleep(2)
     FSV.write("INIT:CONT OFF")
     time.sleep(2)
     FSV.write("INIT:CONM")
     time.sleep(2)
-
     CP50.Set_Freq(459.075)
     CP50.Set_Pow("high")
     CP50.Radio_On()
@@ -846,12 +784,10 @@ def Tx_Transient_performance():
     # time.sleep(3)
     # CP50.Radio_On()
     # time.sleep(0.1)
-    # CP50.Radio_Off()
+    # CP50.Radio_Off()#Tx off transient status not finish yet
     # time.sleep(2)
     # FSV.screenshot('TranP_Tx_off')
-
     #FSV.write("TRIG:SOUR IMM") # set FSV back to freerun
-
 
 def Rx_Adjacent_channel_selectivity(freq, delta):# delta set frequency offset
     Result_sheet.get_sheet("ACS")
@@ -862,13 +798,13 @@ def Rx_Adjacent_channel_selectivity(freq, delta):# delta set frequency offset
     SMB.query('*OPC?')
     CP50.Set_Freq(freq=freq)
     CMS.Set_Timeout(ms=10000)
-
     # read initial SINAD
     SINAD_data_str = CMS.query("SINAD:R?")
+    # strip number from string returned from CMS
     SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
     print(SINAD_data_num)
-    Level_RF = SMB.SMB.Lev_RF()
-
+    Level_RF = SMB.Lev_RF()
+    # below code block it to test Adjacent channel selectivity
     for i in range(0,100):
         if float(SINAD_data_num) > 14.0:
             Result_sheet.write(row = i+2, column = 1, value = Level_RF)
@@ -892,15 +828,13 @@ def Rx_Adjacent_channel_selectivity(freq, delta):# delta set frequency offset
     return ACS
 
 def CHSW_ACS():
-    Start_F = Decimal(487)/Decimal(1) # Decimal module make sure float numbers addition yeilds correct value
+    Start_F = Decimal(451.0125)/Decimal(1) # start from 451.0125MHz
     CP50_Result.get_sheet("ACS_SN02")
-
-    for i in range(30, 40):
+    for i in range(0, 10): # run first 10 channels with 12.5kHz channel spacing
         ACS_high = Rx_Adjacent_channel_selectivity(freq=Start_F, delta=0.0125)
         CP50_Result.write(row = i+2, column = 1, value = Start_F)
         CP50_Result.write(row = i+2, column = 2, value = Start_F+Decimal(0.0125))
         CP50_Result.write(row = i+2, column = 3, value = ACS_high)
-
 
         ACS_low = Rx_Adjacent_channel_selectivity(freq=Start_F, delta=-0.0125)
         CP50_Result.write(row = i+2, column = 4, value = Start_F-Decimal(0.0125))
@@ -912,7 +846,6 @@ def CHSW_ACS():
         Start_F += Decimal(0.0125) # frequency in MHz
 
 
-
 def Rx_Spurious_response_immunity(freq, delta):
     Result_sheet.get_sheet("Spur_Res")
     SML.Wanted_Signal(freq=freq)
@@ -922,14 +855,11 @@ def Rx_Spurious_response_immunity(freq, delta):
     SMB.query('*OPC?')
     CP50.Set_Freq(freq=freq)
     CMS.Set_Timeout(ms=10000)
-
-    # read initial SINAD
     SINAD_data_str = CMS.query("SINAD:R?")
     SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
     print(SINAD_data_num)
     Level_RF = SMB.Lev_RF()
-
-    # below code block to test Spurious_Response
+    # below code block is to test Spurious_Response
     for i in range(0,100):
         if float(SINAD_data_num) > 14.0:
             Result_sheet.write(row = i+2, column = 1, value = Level_RF)
@@ -954,11 +884,9 @@ def Rx_Spurious_response_immunity(freq, delta):
 
 
 def CHSW_SR():
-
-    Start_F = Decimal(479.9875)/Decimal(1) # Decimal module make sure float numbers addition yeilds correct value
+    Start_F = Decimal(479.9875)/Decimal(1) # start from 479.9875MHz
     CP50_Result.get_sheet("day2")
-
-    for i in range(9, 11):
+    for i in range(0, 10): # run first 10 channels with 12.5kHz channel spacing
         Spur_Res = Rx_Spurious_response_immunity(freq=Start_F, delta=Decimal(-2*38.85))
         CP50_Result.write(row = i+2, column = 1, value = Start_F)
         CP50_Result.write(row = i+2, column = 2, value = Start_F+Decimal(-2*38.85))
@@ -982,13 +910,11 @@ def Rx_Intermodulation_Response(freq, delta1, delta2):# delta set frequency offs
     SMC.query('*OPC?')
     CP50.Set_Freq(freq=freq)
     CMS.Set_Timeout(ms=10000)
-
-    # read initial SINAD
     SINAD_data_str = CMS.query("SINAD:R?")
     SINAD_data_num = re.findall(r'\d+\.\d+', SINAD_data_str)[0]
     print(SINAD_data_num)
     Level_RF = SMB.Lev_RF()
-
+    # below code block it to test Intermodulation Response
     for i in range(0,100):
         if float(SINAD_data_num) > 14.0:
             Result_sheet.write(row = i+2, column = 1, value = Level_RF)
@@ -1013,11 +939,11 @@ def Rx_Intermodulation_Response(freq, delta1, delta2):# delta set frequency offs
     Result_sheet.save("Test_Result.xlsx")
     return Inter_Res
 
-def CHSW_Intermodulation():
-    Start_F = Decimal(487)/Decimal(1) # Decimal module make sure float numbers addition yeilds correct value
-    CP50_Result.get_sheet("Intermodulation_Response")
 
-    for i in range(14, 17):
+def CHSW_Intermodulation():
+    Start_F = Decimal(487)/Decimal(1)
+    CP50_Result.get_sheet("Intermodulation_Response")
+    for i in range(10, 20):
         Inter_Res_low = Rx_Intermodulation_Response(freq=Start_F, delta1=0.05, delta2=0.025)
         CP50_Result.write(row = i+2, column = 1, value = Start_F)
         CP50_Result.write(row = i+2, column = 2, value = Start_F+Decimal(0.05))
@@ -1088,4 +1014,4 @@ except BaseException:
 #Tx_Adjacent_channel_power()
 #Tx_Frequency_error_Carrier_power()
 #Tx_Conducted_spurious_emissions()
-CHSW_Intermodulation()
+#CHSW_Intermodulation()
