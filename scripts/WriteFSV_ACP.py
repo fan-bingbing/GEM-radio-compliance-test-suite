@@ -4,7 +4,7 @@ from openpyxl import load_workbook
 rm = visa.ResourceManager()
 FSV = rm.open_resource('TCPIP0::192.168.10.9::hislip0::INSTR') # Spec An
 
-FSV_file_write = load_workbook(filename = "FSV_Setup.xlsx") # create a workbook from existing .xlsx file
+FSV_file_write = load_workbook(filename = "Test_Setup.xlsx") # create a workbook from existing .xlsx file
 sheet = FSV_file_write["ACP"] # load setup sheet in .xlsx to sheet
 
 Centre_frequency = sheet["B1"].value # get start frequency value from sheet
@@ -47,6 +47,7 @@ FSV.write(f"POW:ACH:SPAC:ALT1 {AT_SPACE}kHz")
 FSV.write(f"POW:ACH:MODE {Power_Mode}")
 FSV.write(f"SWE:COUN {Ave_number}")
 FSV.write(f"CALC:MARK:FUNC:POW:MODE WRIT")
+#FSV.write(f"DISP:TRAC:MODE MAXH")
 FSV.write(f"DISP:TRAC:MODE AVER")
 
 FSV.close()

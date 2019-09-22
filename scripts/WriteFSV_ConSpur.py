@@ -4,8 +4,8 @@ from openpyxl import load_workbook
 rm = visa.ResourceManager()
 FSV = rm.open_resource('TCPIP0::192.168.10.9::hislip0::INSTR') # Spec An
 
-FSV_file_write = load_workbook(filename = "FSV_Setup.xlsx") # create a workbook from existing .xlsx file
-sheet = FSV_file_write["Cond_Spurious_4"] # load setup sheet in .xlsx to sheet
+FSV_file_write = load_workbook(filename = "Test_Setup.xlsx") # create a workbook from existing .xlsx file
+sheet = FSV_file_write["Cond_Spurious_3"] # load setup sheet in .xlsx to sheet
 start_frequency = sheet["B1"].value # get start frequency value from sheet
 stop_frequency = sheet["B2"].value # get stop frequency value from sheet
 RBW = sheet["B3"].value # get RBW value from sheet

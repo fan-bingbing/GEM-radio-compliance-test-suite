@@ -8,7 +8,7 @@
 # Temporary files
 *~
 ~$*.doc*
-~$*.xls*
+#~$*.xls*
 *.xlk
 ~$*.ppt*
 # Prevent mac users to commit .DS_Store files

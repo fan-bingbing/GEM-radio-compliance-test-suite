@@ -24,7 +24,7 @@ SSheet = SFile_write["Noise_Hum"] # load "Noise_Hum" sheet
 
 # below code block to configure SML to standard teset condition
 Frequency_RF = SSheet["C1"].value #
-Level_RF = SSheet["C2"].value #
+Level_RF = SSheet["C2"].value # RF level will be set to 69.5dBuV(=30+6+30+3.5)
 Frequency_AF = SSheet["C3"].value #
 Deviation = SSheet["C4"].value #
 Mod_state = SSheet["C5"].value #

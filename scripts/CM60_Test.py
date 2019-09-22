@@ -92,50 +92,50 @@ time.sleep(3)
 #FSV.write(f"DISP:TRAC:MODE VIEW")
 FSV.query("*OPC?")
 
-CM60_Control.Radio_Con('com5', 9600, None, payload1)# set radio to 25W
-
-
-for i in range(0,10):
-    CM60_Control.Radio_Con('com5', 9600, None, payload0)# set frequency
-
-    CM60_Control.Radio_Con('com5', 9600, None, payload2)# PTT on
-    CM60_Control.Radio_Con('com5', 9600, None, payload3)# set audio
-    time.sleep(1)
-    FSV.write(f"DISP:TRAC:MODE MAXH")
-    time.sleep(3)
-    ACP = FSV.query("CALC:MARK:FUNC:POW:RES? ACP")
-    LIST = re.findall(r'\d+\.\d+', ACP)
-
-
-    print(LIST)
-
-
-    RSheet.cell(row = i+2, column = 1, value = Centre_frequency)
-    RSheet.cell(row = i+2, column = 2, value = float(LIST[0]))
-    RSheet.cell(row = i+2, column = 3, value = -float(LIST[1]))
-    RSheet.cell(row = i+2, column = 4, value = -float(LIST[2]))
-    RFile_write.save("CM60_Result.xlsx") # save existing .xlsx file
-    FSV.query("*OPC?")
-    CM60_Control.Radio_Con('com5', 9600, None, payload8) # PTT off
-
-    if payload0[3]<=254: # payload stores decimal value ranging from 0 to 255
-        payload0[3] = payload0[3] + 1 # carrier frequency add 12.5kHz per iteration
-    else:
-        payload0[3] = 0
-        payload0[2] = payload0[2] + 1
-
-    print("Current Channel HEX:")
-    print(hex(payload0[2]),hex(payload0[3]))
-
-
-    # str1 = "".join((str(hex(payload0[2])),str(hex(payload0[3]))))
-    # print(int(str1,16))
-    # print(f"Current Channel frequency:{int(str1,16)}")
-
-    Centre_frequency = float(Centre_frequency) + 12.5/1000
-    FSV.write(f"FREQ:CENT {Centre_frequency}MHz")
-    FSV.write(f"DISP:TRAC:MODE WRIT")
-
-#print(FSV.query("*OPC?")).replace("1","ACP test Completed") # replace return character "1" to "completed"
+# CM60_Control.Radio_Con('com5', 9600, None, payload1)# set radio to 25W
+#
+#
+# for i in range(0,steps):
+#     CM60_Control.Radio_Con('com5', 9600, None, payload0)# set frequency
+#
+#     CM60_Control.Radio_Con('com5', 9600, None, payload2)# PTT on
+#     CM60_Control.Radio_Con('com5', 9600, None, payload3)# set audio
+#     time.sleep(1)
+#     FSV.write(f"DISP:TRAC:MODE AVER")
+#     time.sleep(3)
+#     ACP = FSV.query("CALC:MARK:FUNC:POW:RES? ACP")
+#     LIST = re.findall(r'\d+\.\d+', ACP)
+#
+#
+#     print(LIST)
+#
+#
+#     RSheet.cell(row = i+2, column = 1, value = Centre_frequency)
+#     RSheet.cell(row = i+2, column = 2, value = float(LIST[0]))
+#     RSheet.cell(row = i+2, column = 3, value = -float(LIST[1]))
+#     RSheet.cell(row = i+2, column = 4, value = -float(LIST[2]))
+#     RFile_write.save("CM60_Result.xlsx") # save existing .xlsx file
+#     FSV.query("*OPC?")
+#     CM60_Control.Radio_Con('com5', 9600, None, payload8) # PTT off
+#
+#     if payload0[3]<=254: # payload stores decimal value ranging from 0 to 255
+#         payload0[3] = payload0[3] + 1 # carrier frequency add 12.5kHz per iteration
+#     else:
+#         payload0[3] = 0
+#         payload0[2] = payload0[2] + 1
+#
+#     print("Current Channel HEX:")
+#     print(hex(payload0[2]),hex(payload0[3]))
+#
+#
+#     # str1 = "".join((str(hex(payload0[2])),str(hex(payload0[3]))))
+#     # print(int(str1,16))
+#     # print(f"Current Channel frequency:{int(str1,16)}")
+#
+#     Centre_frequency = float(Centre_frequency) + 12.5/1000
+#     FSV.write(f"FREQ:CENT {Centre_frequency}MHz")
+#     FSV.write(f"DISP:TRAC:MODE WRIT")
+#
+# #print(FSV.query("*OPC?")).replace("1","ACP test Completed") # replace return character "1" to "completed"
 
 FSV.close()
