@@ -682,6 +682,35 @@ def copy_excel(to_file, sheet_list): # copy multiple sheets from Test_Result.xls
 # example usage: sheet_list = ['Ferror_Pow', 'ACP', 'Cond_Spur_4268' ]
 # example usage: copy_excel('haha', sheet_list)
 
+def get_aflev(n=10): # get Audio level reading from CMS, n is numebr of average
+    sum = 0.0
+    for i in range(0, n):
+        SINAD_data_str = CMS.query("LE:A:R?")
+        SINAD_data_num = re.findall(r'\d+', SINAD_data_str)[0]
+        sum = sum + float(SINAD_data_num)
+        print(sum)
+    return sum/n
+
+def noise_hum():# CONDITION:tune radio volumn to get around 80mV AF output reading on CMS
+    SML.write(f"*RST")
+    SML.write("SYST:DISP:UPD ON")
+    SML.write(f"FREQ 476.9MHz")
+    SML.write(f":UNIT:POW dBuV")
+    SML.write(f":POW 60dBuV")
+    SML.write(f"LFO:FREQ 1kHz")
+    SML.write(f"FM 1.5kHz")
+    SML.write(f"FM:STAT ON")
+    SML.write(f"OUTP ON")
+    SML.query('*OPC?')
+    CMS.Set_Timeout(ms=10000)
+    a = get_aflev(10) # audio level with modulation
+    time.sleep(2)
+    SML.write(f"FM:STAT OFF")
+    b = get_aflev(10)/1000.0
+    hum = 10*math.log(b/a, 10)
+    print(hum)
+    return hum
+
 
 
 def Tx_set_standard_test_condition():
